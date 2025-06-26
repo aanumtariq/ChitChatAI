@@ -21,12 +21,12 @@ interface ThemeContextType {
 }
 
 const lightColors: Colors = {
-  primary: '#007AFF',
-  secondary: '#5856D6',
+  primary: '#EBAD12',         // Figma yellow
+  secondary: '#FCD34D',       // complementary tone
   background: '#FFFFFF',
   surface: '#F8F9FA',
-  text: '#000000',
-  textSecondary: '#8E8E93',
+  text: '#333333',            // darker for readability
+  textSecondary: '#666666',   // standard body text
   border: '#E5E5E7',
   success: '#34C759',
   warning: '#FF9500',
@@ -34,17 +34,18 @@ const lightColors: Colors = {
 };
 
 const darkColors: Colors = {
-  primary: '#0A84FF',
-  secondary: '#5856D6',
-  background: '#000000',
+  primary: '#EBAD12',
+  secondary: '#FCD34D',
+  background: '#121212',      // true dark background
   surface: '#1C1C1E',
-  text: '#FFFFFF',
-  textSecondary: '#8E8E93',
+  text: '#FFFFFF',            // main text bright and readable
+  textSecondary: '#B0B0B0',   // slightly muted
   border: '#38383A',
   success: '#30D158',
   warning: '#FF9F0A',
   error: '#FF453A',
 };
+
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

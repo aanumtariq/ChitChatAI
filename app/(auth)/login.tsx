@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text,StyleSheet, TouchableOpacity, Alert,KeyboardAvoidingView,Platform, ScrollView,} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { validateEmail } from '@/utils/validators';
@@ -16,10 +17,11 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login, loginWithGoogle } = useAuth();
+  const { colors } = useTheme();
 
   const validateForm = () => {
     let isValid = true;
-    
+
     if (!validateEmail(email)) {
       setEmailError('Enter a valid email');
       isValid = false;
@@ -64,71 +66,81 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardView} 
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft size={24} color="#000000" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
-        </View>
-
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            error={emailError}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            error={passwordError}
-            secureTextEntry
-          />
-
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            loading={loading}
-            style={styles.loginButton}
-          />
-
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Sign in to continue
+            </Text>
           </View>
 
-          <Button
-            title="Continue with Google"
-            onPress={handleGoogleLogin}
-            variant="outline"
-            loading={loading}
-          />
+          <View style={styles.form}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              error={emailError}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-          <TouchableOpacity
-            style={styles.signupLink}
-            onPress={() => router.push('/(auth)/signup')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.signupText}>
-              Don't have an account? <Text style={styles.signupTextBold}>Sign Up</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              error={passwordError}
+              secureTextEntry
+            />
+
+            <Button
+              title="Sign In"
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.loginButton}
+            />
+
+            <View style={styles.divider}>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            </View>
+
+            <Button
+              title="Continue with Google"
+              onPress={handleGoogleLogin}
+              variant="outline"
+              loading={loading}
+            />
+
+            <TouchableOpacity
+              style={styles.signupLink}
+              onPress={() => router.push('/(auth)/signup')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.signupText, { color: colors.textSecondary }]}>
+                Don't have an account?{' '}
+                <Text style={{ color: colors.primary, fontWeight: '600' }}>Sign Up</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -137,10 +149,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    paddingBottom: 40,
   },
   header: {
     paddingHorizontal: 24,
@@ -156,15 +172,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#000000',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
   },
   form: {
-    flex: 1,
     paddingHorizontal: 24,
     gap: 20,
   },
@@ -179,12 +192,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E5E7',
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: '#8E8E93',
   },
   signupLink: {
     alignItems: 'center',
@@ -192,10 +203,5 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 16,
-    color: '#8E8E93',
-  },
-  signupTextBold: {
-    color: '#007AFF',
-    fontWeight: '600',
   },
 });
