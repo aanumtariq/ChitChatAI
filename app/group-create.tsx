@@ -242,11 +242,13 @@ const styles = StyleSheet.create({
   emailInputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+
     gap: 12,
   },
   addButton: {
     minWidth: 80,
-    marginBottom: 20,
+    // marginTop: 25,
+    alignItems: 'center',
   },
   memberCount: {
     alignItems: 'center',
