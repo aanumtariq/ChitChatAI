@@ -11,6 +11,10 @@ export interface Message {
   senderName: string;
   timestamp: string;
   isAI: boolean;
+   replyTo?: {
+    senderName: string;
+    text: string;
+  };
 }
 
 export interface Group {
