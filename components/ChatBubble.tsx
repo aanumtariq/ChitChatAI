@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Message } from '@/types';
 import { Bot } from 'lucide-react-native';
@@ -6,9 +6,16 @@ import { Bot } from 'lucide-react-native';
 interface ChatBubbleProps {
   message: Message;
   isCurrentUser: boolean;
+  onReply?: (message: Message) => void;
+  useLongPressReply?: boolean;
 }
 
-export default function ChatBubble({ message, isCurrentUser }: ChatBubbleProps) {
+export default function ChatBubble({
+  message,
+  isCurrentUser,
+  onReply,
+  useLongPressReply,
+}: ChatBubbleProps) {
   const { colors } = useTheme();
 
   const formatTime = (timestamp: string) => {
@@ -16,62 +23,113 @@ export default function ChatBubble({ message, isCurrentUser }: ChatBubbleProps) 
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  return (
-    <View style={styles.container}>
-      <View
+  const BubbleContent = () => (
+    <View
+      style={[
+        styles.bubble,
+        {
+          backgroundColor: message.isAI
+            ? colors.surface
+            : isCurrentUser
+            ? colors.primary
+            : colors.surface,
+          alignSelf: message.isAI
+            ? 'flex-start'
+            : isCurrentUser
+            ? 'flex-end'
+            : 'flex-start',
+          marginLeft: message.isAI ? 0 : isCurrentUser ? 40 : 0,
+          marginRight: message.isAI ? 40 : isCurrentUser ? 0 : 40,
+        },
+      ]}
+    >
+      {message.isAI && (
+        <View style={styles.aiHeader}>
+          <Bot size={16} color={colors.primary} strokeWidth={2} />
+          <Text style={[styles.senderName, { color: colors.primary }]}>
+            AI Assistant
+          </Text>
+        </View>
+      )}
+
+      {!message.isAI && !isCurrentUser && (
+        <Text style={[styles.senderName, { color: colors.textSecondary }]}>
+          {message.senderName}
+        </Text>
+      )}
+
+      {message.replyTo && (
+        <View
+          style={[
+            styles.replyPreview,
+            {
+              borderLeftColor: isCurrentUser ? '#fff8' : '#0002',
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.replySender,
+              {
+                color: isCurrentUser ? colors.background : colors.textSecondary,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {message.replyTo.senderName}
+          </Text>
+          <Text
+            style={[
+              styles.replyContent,
+              {
+                color: isCurrentUser ? colors.background : colors.textSecondary,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {message.replyTo.text}
+          </Text>
+        </View>
+      )}
+
+      <Text
         style={[
-          styles.bubble,
+          styles.messageText,
           {
-            backgroundColor: message.isAI 
-              ? colors.surface 
-              : isCurrentUser 
-                ? colors.primary 
-                : colors.surface,
-            alignSelf: message.isAI ? 'flex-start' : isCurrentUser ? 'flex-end' : 'flex-start',
-            marginLeft: message.isAI ? 0 : isCurrentUser ? 40 : 0,
-            marginRight: message.isAI ? 40 : isCurrentUser ? 0 : 40,
-          }
+            color: isCurrentUser && !message.isAI
+              ? colors.background
+              : colors.text,
+          },
         ]}
       >
-        {message.isAI && (
-          <View style={styles.aiHeader}>
-            <Bot size={16} color={colors.primary} strokeWidth={2} />
-            <Text style={[styles.senderName, { color: colors.primary }]}>
-              AI Assistant
-            </Text>
-          </View>
-        )}
-        
-        {!message.isAI && !isCurrentUser && (
-          <Text style={[styles.senderName, { color: colors.textSecondary }]}>
-            {message.senderName}
-          </Text>
-        )}
-        
-        <Text
-          style={[
-            styles.messageText,
-            {
-              color: isCurrentUser && !message.isAI ? colors.background : colors.text,
-            }
-          ]}
-        >
-          {message.text}
-        </Text>
-        
-        <Text
-          style={[
-            styles.timestamp,
-            {
-              color: isCurrentUser && !message.isAI 
-                ? colors.background + '80' 
+        {message.text}
+      </Text>
+
+      <Text
+        style={[
+          styles.timestamp,
+          {
+            color:
+              isCurrentUser && !message.isAI
+                ? colors.background + '80'
                 : colors.textSecondary,
-            }
-          ]}
-        >
-          {formatTime(message.timestamp)}
-        </Text>
-      </View>
+          },
+        ]}
+      >
+        {formatTime(message.timestamp)}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {useLongPressReply ? (
+        <Pressable onLongPress={() => onReply?.(message)}>
+          <BubbleContent />
+        </Pressable>
+      ) : (
+        <BubbleContent />
+      )}
     </View>
   );
 }
@@ -106,5 +164,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     alignSelf: 'flex-end',
+  },
+  replyPreview: {
+    borderLeftWidth: 3,
+    paddingLeft: 8,
+    marginBottom: 6,
+  },
+  replySender: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  replyContent: {
+    fontSize: 12,
   },
 });

@@ -1,56 +1,74 @@
 import { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { Send } from 'lucide-react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { PaperPlaneTilt, X } from 'phosphor-react-native';
+import { Message } from '@/types';
 
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend: (text: string) => void;
   disabled?: boolean;
+  replyTo?: Message | null;
+  onCancelReply?: () => void;
 }
 
-export default function ChatInput({ onSend, disabled = false }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+export default function ChatInput({
+  onSend,
+  disabled,
+  replyTo,
+  onCancelReply,
+}: ChatInputProps) {
+  const [text, setText] = useState('');
   const { colors } = useTheme();
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
-      onSend(message.trim());
-      setMessage('');
+    if (text.trim()) {
+      onSend(text.trim());
+      setText('');
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-      <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      {replyTo && (
+        <View style={[styles.replyBanner, { borderLeftColor: colors.primary }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.replyingTo, { color: colors.primary }]}>
+              Replying to {replyTo.senderName}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={[styles.replyText, { color: colors.textSecondary }]}
+            >
+              {replyTo.text}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={onCancelReply}>
+            <X size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.inputRow}>
         <TextInput
           style={[styles.input, { color: colors.text }]}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Type a message..."
+          placeholder="Type a message"
           placeholderTextColor={colors.textSecondary}
-          multiline
-          maxLength={1000}
+          value={text}
+          onChangeText={setText}
           editable={!disabled}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-          blurOnSubmit={false}
         />
         <TouchableOpacity
-          style={[
-            styles.sendButton,
-            {
-              backgroundColor: message.trim() && !disabled ? colors.primary : colors.border,
-            }
-          ]}
+          style={[styles.sendButton, { backgroundColor: colors.primary }]}
           onPress={handleSend}
-          disabled={!message.trim() || disabled}
-          activeOpacity={0.8}
+          disabled={disabled}
         >
-          <Send 
-            size={20} 
-            color={message.trim() && !disabled ? colors.background : colors.textSecondary} 
-            strokeWidth={2} 
-          />
+          <PaperPlaneTilt size={20} color="#fff" weight="fill" />
         </TouchableOpacity>
       </View>
     </View>
@@ -59,31 +77,43 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 8,
+    paddingBottom: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
   },
-  inputContainer: {
+  replyBanner: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 48,
+    alignItems: 'center',
+    borderLeftWidth: 4,
+    paddingLeft: 8,
+    paddingVertical: 4,
+    marginBottom: 6,
+  },
+  replyingTo: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  replyText: {
+    fontSize: 12,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
     fontSize: 16,
-    lineHeight: 20,
-    maxHeight: 100,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#f1f1f1',
+    marginRight: 8,
   },
   sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
   },
 });
