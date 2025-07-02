@@ -29,18 +29,11 @@ export default function GroupChatScreen() {
   const [loading, setLoading] = useState(true);
   const [aiTyping, setAiTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [pinnedMessage, setPinnedMessage] = useState<Message | null>(null);
   const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
-
-  if (!id) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Group ID not found in route</Text>
-      </View>
-    );
-  }
 
   useEffect(() => {
     fetchGroupData();
@@ -76,10 +69,12 @@ export default function GroupChatScreen() {
       senderName: user!.name,
       timestamp: new Date().toISOString(),
       isAI: false,
-      replyTo: replyTo ? {
-        senderName: replyTo.senderName,
-        text: replyTo.text,
-      } : undefined,
+      replyTo: replyTo
+        ? {
+            senderName: replyTo.senderName,
+            text: replyTo.text,
+          }
+        : undefined,
     };
 
     setMessages((prev) => [...prev, tempMessage]);
@@ -168,6 +163,19 @@ export default function GroupChatScreen() {
           </TouchableOpacity>
         </View>
 
+        {pinnedMessage && (
+          <View style={[styles.pinnedContainer, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.pinnedTitle, { color: colors.primary }]}>📌 Pinned Message</Text>
+              <Text style={[styles.pinnedSender, { color: colors.textSecondary }]}>{pinnedMessage.senderName}</Text>
+              <Text style={[styles.pinnedText, { color: colors.text }]} numberOfLines={2}>{pinnedMessage.text}</Text>
+            </View>
+            <TouchableOpacity onPress={() => setPinnedMessage(null)}>
+              <Text style={[styles.unpinText, { color: colors.primary }]}>Unpin</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {replyTo && (
           <View style={[styles.replyBanner, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
             <CornerDownLeft size={16} color={colors.primary} />
@@ -193,7 +201,31 @@ export default function GroupChatScreen() {
                 message={item}
                 isCurrentUser={item.senderId === user?.id}
                 onReply={(msg) => setReplyTo(msg)}
-                useLongPressReply={true}
+                onDelete={(msg) => {
+                  Alert.alert(
+                    'Delete Message',
+                    'Are you sure you want to delete this message?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: () => setMessages((prev) => prev.filter((m) => m.id !== msg.id)),
+                      },
+                    ]
+                  );
+                }}
+                onPin={(msg) => {
+                  if (pinnedMessage?.id === msg.id) {
+                    setPinnedMessage(null);
+                    Alert.alert('Unpinned', 'Message has been unpinned');
+                  } else {
+                    setPinnedMessage(msg);
+                    Alert.alert('Pinned', 'Message pinned at the top');
+                  }
+                }}
+                pinnedMessageId={pinnedMessage?.id}
+                useLongPressReply
               />
             )}
             contentContainerStyle={styles.messagesContainer}
@@ -292,5 +324,32 @@ const styles = StyleSheet.create({
   typingText: {
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  pinnedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderLeftWidth: 4,
+    padding: 12,
+    margin: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  pinnedTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  pinnedSender: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  pinnedText: {
+    fontSize: 14,
+    maxWidth: '95%',
+  },
+  unpinText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
