@@ -10,6 +10,7 @@ import Animated, {
   withSequence,
   withDelay
 } from 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -45,11 +46,13 @@ export default function SplashScreen() {
   }, [user, loading]);
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <View style={styles.container}>
       <Animated.View style={[styles.iconContainer, animatedStyle]}>
         <MessageCircle size={80} color="#007AFF" strokeWidth={2} />
       </Animated.View>
     </View>
+    </GestureHandlerRootView>
   );
 }
 

@@ -11,6 +11,12 @@ export interface Message {
   senderName: string;
   timestamp: string;
   isAI: boolean;
+   replyTo?: {
+    senderName: string;
+    text: string;
+    
+  };
+  isForwarded?: boolean;
 }
 
 export interface Group {
@@ -20,4 +26,5 @@ export interface Group {
   createdAt: string;
   pinned?: boolean;
   lastMessage?: Message;
+  
 }
