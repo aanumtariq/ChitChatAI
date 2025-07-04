@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Modal
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView , useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -14,8 +14,11 @@ import Loader from '@/components/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGroups, deleteGroup } from '@/services/api';
 import { Group } from '@/types';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+
 
 export default function ChatListScreen() {
+  const insets = useSafeAreaInsets(); // ✅ NEW
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,13 +75,29 @@ export default function ChatListScreen() {
     try {
       await deleteGroup(selectedGroupId);
       setGroups((prev) => prev.filter((g) => g.id !== selectedGroupId));
-      alert('Chat deleted');
+      Toast.show({
+        type: 'success',
+        text1: 'Chat deleted',
+        // props: {
+        //   backgroundColor: colors.surface,
+        //   textColor: colors.text,
+        // },
+      });
     } catch {
-      alert('Failed to delete chat');
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to load chats',
+        // props: {
+        //   backgroundColor: colors.error,
+        //   textColor: '#fff',
+        // },
+      });
     } finally {
       setSelectedGroupId(null);
     }
   };
+
+  
 
   const handleDeleteGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -148,7 +167,11 @@ export default function ChatListScreen() {
       <FloatingButton
         icon={Plus}
         onPress={() => router.push('/group-create')}
-        style={styles.floatingButton}
+        style={{
+    position: 'absolute',
+    bottom: insets.bottom + 10, 
+    right: 25,
+  }}
       />
 
       <Modal
@@ -190,7 +213,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '700', marginBottom: 4 },
   subtitle: { fontSize: 16 },
   listContainer: { paddingHorizontal: 24, paddingBottom: 100 },
-  floatingButton: { position: 'absolute', bottom: 100, right: 24 },
   overlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 24,
@@ -202,3 +224,4 @@ const styles = StyleSheet.create({
   dialogBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
   dialogBtnText: { fontSize: 16, fontWeight: '600' },
 });
+
