@@ -249,30 +249,54 @@ export default function GroupChatScreen() {
     );
   };
 
-  const confirmForwarding = () => {
-    if (!selectedForwardMessage) return;
-    selectedGroups.forEach(async (groupId) => {
-      const forwardMsg: Message = {
-        ...selectedForwardMessage,
-        id: Date.now().toString() + Math.random(),
-        isForwarded: true,
-        isAI: false,
-        senderId: user!.id,
-        senderName: user!.name,
-        timestamp: new Date().toISOString(),
-      };
+  // const confirmForwarding = () => {
+  //   if (!selectedForwardMessage) return;
+  //   selectedGroups.forEach(async (groupId) => {
+  //     const forwardMsg: Message = {
+  //       ...selectedForwardMessage,
+  //       id: Date.now().toString() + Math.random(),
+  //       isForwarded: true,
+  //       isAI: false,
+  //       senderId: user!.id,
+  //       senderName: user!.name,
+  //       timestamp: new Date().toISOString(),
+  //     };
 
-      const key = `${user?.id}_group_${groupId}_messages`;
-      const existing = await AsyncStorage.getItem(key);
-      const parsed = existing ? JSON.parse(existing) : { messages: [] };
-      parsed.messages.push(forwardMsg);
-      await AsyncStorage.setItem(key, JSON.stringify(parsed));
-    });
-    setForwardModalVisible(false);
-    setSelectedGroups([]);
-    setSelectedForwardMessage(null);
-  };
+  //     const key = `${user?.id}_group_${groupId}_messages`;
+  //     const existing = await AsyncStorage.getItem(key);
+  //     const parsed = existing ? JSON.parse(existing) : { messages: [] };
+  //     parsed.messages.push(forwardMsg);
+  //     await AsyncStorage.setItem(key, JSON.stringify(parsed));
+  //   });
+  //   setForwardModalVisible(false);
+  //   setSelectedGroups([]);
+  //   setSelectedForwardMessage(null);
+  // };
+const confirmForwarding = async () => {
+  if (!selectedForwardMessage) return;
 
+  for (const groupId of selectedGroups) {
+    const forwardMsg: Message = {
+      ...selectedForwardMessage,
+      id: Date.now().toString() + Math.random(),
+      isForwarded: true,
+      isAI: false,
+      senderId: user!.id,
+      senderName: user!.name,
+      timestamp: new Date().toISOString(),
+    };
+
+    const key = `${user?.id}_group_${groupId}_messages`;
+    const existing = await AsyncStorage.getItem(key);
+    const parsed = existing ? JSON.parse(existing) : { messages: [] };
+    parsed.messages.push(forwardMsg);
+    await AsyncStorage.setItem(key, JSON.stringify(parsed));
+  }
+
+  setForwardModalVisible(false);
+  setSelectedGroups([]);
+  setSelectedForwardMessage(null);
+};
   if (loading) return <Loader />;
 
   return (
