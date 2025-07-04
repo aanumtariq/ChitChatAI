@@ -63,7 +63,7 @@ export default function ChatInput({
               color: colors.text,
               backgroundColor: colors.inputBackground, // ✅ dynamic input background
             },
-          ]}\
+          ]}
           placeholder="Type a message"
           placeholderTextColor={colors.textSecondary}
           value={text}
