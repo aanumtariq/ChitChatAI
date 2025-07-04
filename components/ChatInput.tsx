@@ -56,13 +56,14 @@ export default function ChatInput({
 
       <View style={styles.inputRow}>
         <TextInput
+
           style={[
             styles.input,
             {
               color: colors.text,
               backgroundColor: colors.inputBackground, // ✅ dynamic input background
             },
-          ]}
+          ]}\
           placeholder="Type a message"
           placeholderTextColor={colors.textSecondary}
           value={text}
@@ -112,6 +113,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
+
     marginRight: 8,
   },
   sendButton: {

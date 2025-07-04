@@ -13,10 +13,11 @@ export interface Message {
   isAI: boolean;
    replyTo?: {
     senderName: string;
-    text: string;
+
     
   };
   isForwarded?: boolean;
+
 }
 
 export interface Group {

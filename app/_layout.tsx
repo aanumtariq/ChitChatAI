@@ -39,15 +39,18 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { SafeAreaProvider } from 'react-native-safe-area-context'; // ✅ Add this import
 
 // import { MenuProvider } from 'react-native-popup-menu';
+
 
 export default function RootLayout() {
   useFrameworkReady();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+
       {/* <MenuProvider> */}
       {/* <SafeAreaProvider> ✅ Wrap entire app in SafeAreaProvider */}
 
@@ -68,6 +71,7 @@ export default function RootLayout() {
 
       {/* </SafeAreaProvider> */}
       {/* </MenuProvider> */}
+
     </GestureHandlerRootView>
   );
 }

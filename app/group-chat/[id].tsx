@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+
   Modal,
   TouchableWithoutFeedback,
   ScrollView,
+
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -32,6 +34,7 @@ export default function GroupChatScreen() {
   const [loading, setLoading] = useState(true);
   const [aiTyping, setAiTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+
   const [pinnedMessage, setPinnedMessage] = useState<Message | null>(null);
   const [confirmationModal, setConfirmationModal] = useState({
     visible: false,
@@ -46,6 +49,7 @@ export default function GroupChatScreen() {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
 
+
   const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
@@ -57,6 +61,7 @@ export default function GroupChatScreen() {
     fetchGroupData();
     loadMessagesFromStorage();
     fetchAllGroups();
+
   }, [id]);
 
   useEffect(() => {
@@ -128,21 +133,26 @@ export default function GroupChatScreen() {
       senderName: user!.name,
       timestamp: new Date().toISOString(),
       isAI: false,
+
       replyTo: replyTo ? { senderName: replyTo.senderName, text: replyTo.text } : undefined,
     };
 
     const updated = [...messages, tempMessage];
     setMessages(updated);
+
     setReplyTo(null);
 
     try {
       const serverMessage = await sendMessage(id!, text, tempMessage.replyTo);
+
       const finalMessage: Message = {
+
         ...serverMessage,
         senderId: user!.id,
         senderName: user!.name,
         replyTo: tempMessage.replyTo,
       };
+
 
       setMessages((prev) => prev.map((msg) => (msg.id === tempMessage.id ? finalMessage : msg)));
 
@@ -156,13 +166,16 @@ export default function GroupChatScreen() {
         subtitle: 'Failed to send message',
         onConfirm: () => setConfirmationModal({ ...confirmationModal, visible: false }),
       });
+
     }
   };
 
   const handleAIResponse = async (userMessage: string) => {
     setAiTyping(true);
+
     try {
       const aiResponse = await generateAIResponse(userMessage, messages);
+
       const aiMessage: Message = {
         id: Date.now().toString(),
         text: aiResponse,
@@ -171,7 +184,9 @@ export default function GroupChatScreen() {
         timestamp: new Date().toISOString(),
         isAI: true,
       };
+
       setMessages((prev) => [...prev, aiMessage]);
+
     } finally {
       setAiTyping(false);
     }
@@ -261,12 +276,15 @@ export default function GroupChatScreen() {
   if (loading) return <Loader />;
 
   return (
+
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
+
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <ArrowLeft size={24} color={colors.text} />
@@ -300,6 +318,7 @@ export default function GroupChatScreen() {
         )}
 
         {/* Reply Banner */}
+
         {replyTo && (
           <View style={[styles.replyBanner, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
             <CornerDownLeft size={16} color={colors.primary} />
@@ -314,6 +333,7 @@ export default function GroupChatScreen() {
         )}
 
         {/* Messages */}
+
         {messages.length === 0 ? (
           <EmptyState title="No messages yet" subtitle="Start the conversation and say something!" />
         ) : (
@@ -326,12 +346,14 @@ export default function GroupChatScreen() {
                 message={item}
                 isCurrentUser={item.senderId === user?.id}
                 onReply={(msg) => setReplyTo(msg)}
+
                 onDelete={(msg) => handleDeleteMessage(msg.id)}
                 onPin={handlePinMessage}
                 onClearAll={handleClearChat}
                 pinnedMessageId={pinnedMessage?.id}
-                useLongPressReply
+                useLongPressReply={true}
                 onForward={handleForwardMessage}
+
               />
             )}
             contentContainerStyle={styles.messagesContainer}
@@ -350,6 +372,7 @@ export default function GroupChatScreen() {
         )}
 
         <ChatInput onSend={handleSendMessage} disabled={aiTyping} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+
 
         {/* Confirmation Modal */}
         <Modal visible={confirmationModal.visible} transparent animationType="fade">
@@ -398,6 +421,7 @@ export default function GroupChatScreen() {
             </View>
           </View>
         </Modal>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -456,10 +480,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   modalContent: {
     width: 300,
     padding: 20,
     borderRadius: 10,
+
   },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
   modalSubtitle: { fontSize: 14, textAlign: 'center' },
@@ -469,8 +495,10 @@ const styles = StyleSheet.create({
     gap: 20,
     marginTop: 10,
   },
+
   confirmBtn: { fontSize: 16, fontWeight: '600', marginTop: 16 },
   cancelBtn: { fontSize: 16, fontWeight: '600', marginTop: 8 },
 });
+
 
 
