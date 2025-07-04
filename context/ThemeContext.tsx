@@ -6,6 +6,7 @@ interface Colors {
   secondary: string;
   background: string;
   surface: string;
+  inputBackground: string; // ✅ NEW
   text: string;
   textSecondary: string;
   border: string;
@@ -21,12 +22,13 @@ interface ThemeContextType {
 }
 
 const lightColors: Colors = {
-  primary: '#EBAD12',         // Figma yellow
-  secondary: '#FCD34D',       // complementary tone
+  primary: '#EBAD12',
+  secondary: '#FCD34D',
   background: '#FFFFFF',
   surface: '#F8F9FA',
-  text: '#333333',            // darker for readability
-  textSecondary: '#666666',   // standard body text
+  inputBackground: '#f1f1f1', // ✅ light input bg
+  text: '#333333',
+  textSecondary: '#666666',
   border: '#E5E5E7',
   success: '#34C759',
   warning: '#FF9500',
@@ -36,16 +38,16 @@ const lightColors: Colors = {
 const darkColors: Colors = {
   primary: '#EBAD12',
   secondary: '#FCD34D',
-  background: '#121212',      // true dark background
+  background: '#121212',
   surface: '#1C1C1E',
-  text: '#FFFFFF',            // main text bright and readable
-  textSecondary: '#B0B0B0',   // slightly muted
+  inputBackground: '#2A2A2A', // ✅ dark input bg
+  text: '#FFFFFF',
+  textSecondary: '#B0B0B0',
   border: '#38383A',
   success: '#30D158',
   warning: '#FF9F0A',
   error: '#FF453A',
 };
-
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -70,7 +72,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleTheme = async () => {
     const newTheme = !isDark;
     setIsDark(newTheme);
-    
+
     try {
       await SecureStore.setItemAsync('theme', newTheme ? 'dark' : 'light');
     } catch (error) {

@@ -1,4 +1,14 @@
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Modal,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native';
+
 import { useTheme } from '@/context/ThemeContext';
 import { Message } from '@/types';
 import { Bot } from 'lucide-react-native';
@@ -7,21 +17,41 @@ interface ChatBubbleProps {
   message: Message;
   isCurrentUser: boolean;
   onReply?: (message: Message) => void;
+
+  onDelete?: (message: Message) => void;
+  onPin?: (message: Message) => void;
+  onClearAll?: () => void;
+  onForward?: (message: Message) => void;  // New prop for forward
   useLongPressReply?: boolean;
+  pinnedMessageId?: string | null;
+
 }
 
 export default function ChatBubble({
   message,
   isCurrentUser,
   onReply,
+
+  onDelete,
+  onPin,
+  onClearAll,
+  onForward,         // Receive forward callback
   useLongPressReply,
+  pinnedMessageId,
+
 }: ChatBubbleProps) {
   const { colors } = useTheme();
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const handleLongPress = () => {
+    if (useLongPressReply) setModalVisible(true);
+  };
+
 
   const BubbleContent = () => (
     <View
@@ -46,33 +76,33 @@ export default function ChatBubble({
       {message.isAI && (
         <View style={styles.aiHeader}>
           <Bot size={16} color={colors.primary} strokeWidth={2} />
-          <Text style={[styles.senderName, { color: colors.primary }]}>
-            AI Assistant
-          </Text>
+
+          <Text style={[styles.senderName, { color: colors.primary }]}>AI Assistant</Text>
+
         </View>
       )}
 
       {!message.isAI && !isCurrentUser && (
-        <Text style={[styles.senderName, { color: colors.textSecondary }]}>
-          {message.senderName}
-        </Text>
+
+        <Text style={[styles.senderName, { color: colors.textSecondary }]}>{message.senderName}</Text>
+
       )}
 
       {message.replyTo && (
         <View
           style={[
             styles.replyPreview,
-            {
-              borderLeftColor: isCurrentUser ? '#fff8' : '#0002',
-            },
+
+            { borderLeftColor: isCurrentUser ? '#fff8' : '#0002' },
+
           ]}
         >
           <Text
             style={[
               styles.replySender,
-              {
-                color: isCurrentUser ? colors.background : colors.textSecondary,
-              },
+
+              { color: isCurrentUser ? colors.background : colors.textSecondary },
+
             ]}
             numberOfLines={1}
           >
@@ -81,9 +111,9 @@ export default function ChatBubble({
           <Text
             style={[
               styles.replyContent,
-              {
-                color: isCurrentUser ? colors.background : colors.textSecondary,
-              },
+
+              { color: isCurrentUser ? colors.background : colors.textSecondary },
+
             ]}
             numberOfLines={1}
           >
@@ -95,11 +125,8 @@ export default function ChatBubble({
       <Text
         style={[
           styles.messageText,
-          {
-            color: isCurrentUser && !message.isAI
-              ? colors.background
-              : colors.text,
-          },
+          { color: isCurrentUser && !message.isAI ? colors.background : colors.text },
+
         ]}
       >
         {message.text}
@@ -123,21 +150,74 @@ export default function ChatBubble({
 
   return (
     <View style={styles.container}>
-      {useLongPressReply ? (
-        <Pressable onLongPress={() => onReply?.(message)}>
-          <BubbleContent />
-        </Pressable>
-      ) : (
+
+      <Pressable onLongPress={handleLongPress}>
         <BubbleContent />
-      )}
+      </Pressable>
+
+      <Modal
+        transparent
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  onReply?.(message);
+                }}
+              >
+                <Text style={[styles.modalOption, { color: colors.text }]}>Reply</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  onDelete?.(message);
+                }}
+              >
+                <Text style={[styles.modalOption, { color: '#FF5A5F' }]}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  onPin?.(message);
+                }}
+              >
+                <Text style={[styles.modalOption, { color: colors.primary }]}>
+                  {pinnedMessageId === message.id ? 'Unpin' : 'Pin'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  onClearAll?.();
+                }}
+              >
+                <Text style={[styles.modalOption, { color: colors.primary }]}>Clear All</Text>
+              </TouchableOpacity>
+              {/* Forward option added here */}
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(false);
+                  onForward?.(message);
+                }}
+              >
+                <Text style={[styles.modalOption, { color: colors.primary }]}>Forward</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 4,
-  },
+  container: { marginVertical: 4 },
   bubble: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -170,11 +250,27 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     marginBottom: 6,
   },
-  replySender: {
-    fontSize: 12,
-    fontWeight: 'bold',
+
+  replySender: { fontSize: 12, fontWeight: 'bold' },
+  replyContent: { fontSize: 12 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  replyContent: {
-    fontSize: 12,
+  modalContent: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    width: 220,
+    elevation: 6,
+  },
+  modalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+
   },
 });
