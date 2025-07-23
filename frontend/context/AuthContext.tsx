@@ -1,7 +1,20 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { User } from '@/types';
-import { loginUser, registerUser, googleAuth } from '@/services/auth';
+import {
+  loginUser,
+  registerUser,
+  googleLogin,
+  googleRegister,
+} from '@/services/auth';
+
+import { AuthResponse } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +26,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// type AuthResponse = User & { token: string };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -45,18 +60,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    const userData = await loginUser(email, password);
-    await storeUser(userData);
+    const userData: AuthResponse = await loginUser(email, password);
+    await SecureStore.setItemAsync('userToken', userData.token); // Store the JWT
+    const { token, ...userWithoutToken } = userData;
+    await storeUser(userWithoutToken);
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const userData = await registerUser(name, email, password);
-    await storeUser(userData);
+    const userData: AuthResponse = await registerUser(name, email, password);
+    await SecureStore.setItemAsync('userToken', userData.token); // Store the JWT
+    const { token, ...userWithoutToken } = userData;
+    await storeUser(userWithoutToken);
   };
 
   const loginWithGoogle = async () => {
-    const userData = await googleAuth();
-    await storeUser(userData);
+    // You may need to get the token from your Google login flow
+    // For now, just call googleLogin with a token (update as needed)
+    // const token = ...
+    // const userData = await googleLogin(token);
+    // await storeUser(userData);
+    // Placeholder: throw error if not implemented
+    throw new Error(
+      'Google login not implemented in this context. Use the useGoogleAuth hook in your component.'
+    );
   };
 
   const logout = async () => {
@@ -78,11 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

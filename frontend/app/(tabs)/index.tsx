@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, Modal
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { SafeAreaView , useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Plus, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -12,13 +20,13 @@ import FloatingButton from '@/components/FloatingButton';
 import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getGroups, deleteGroup } from '@/services/api';
+import { getGroups } from '@/services/api';
+import { deleteGroup } from '@/services/api';
 import { Group } from '@/types';
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-
+import Toast from 'react-native-toast-message';
 
 export default function ChatListScreen() {
-  const insets = useSafeAreaInsets(); // ✅ NEW
+  const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -30,7 +38,7 @@ export default function ChatListScreen() {
   const updateGroupLastMessages = async (groupsData: Group[]) => {
     const updated = await Promise.all(
       groupsData.map(async (group) => {
-        const key = `@lastMessage_${group.id}`;
+        const key = `@lastMessage_${group._id}`;
         const stored = await AsyncStorage.getItem(key);
         if (stored) {
           try {
@@ -74,30 +82,20 @@ export default function ChatListScreen() {
     if (!selectedGroupId) return;
     try {
       await deleteGroup(selectedGroupId);
-      setGroups((prev) => prev.filter((g) => g.id !== selectedGroupId));
+      setGroups((prev) => prev.filter((g) => g._id !== selectedGroupId));
       Toast.show({
         type: 'success',
         text1: 'Chat deleted',
-        // props: {
-        //   backgroundColor: colors.surface,
-        //   textColor: colors.text,
-        // },
       });
     } catch {
       Toast.show({
         type: 'error',
-        text1: 'Failed to load chats',
-        // props: {
-        //   backgroundColor: colors.error,
-        //   textColor: '#fff',
-        // },
+        text1: 'Failed to delete chat',
       });
     } finally {
       setSelectedGroupId(null);
     }
   };
-
-  
 
   const handleDeleteGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -105,18 +103,19 @@ export default function ChatListScreen() {
 
   const handlePinGroup = (groupId: string) => {
     setGroups((prev) => {
-      const group = prev.find((g) => g.id === groupId);
+      const group = prev.find((g) => g._id === groupId);
       if (!group) return prev;
 
       const updatedGroup = { ...group, pinned: !group.pinned };
-      const filtered = prev.filter((g) => g.id !== groupId);
+      const filtered = prev.filter((g) => g._id !== groupId);
 
       if (updatedGroup.pinned) {
         return [updatedGroup, ...filtered];
       } else {
-        return [...filtered, updatedGroup].sort((a, b) =>
-          new Date(b.lastMessage?.timestamp || b.createdAt).getTime() -
-          new Date(a.lastMessage?.timestamp || a.createdAt).getTime()
+        return [...filtered, updatedGroup].sort(
+          (a, b) =>
+            new Date(b.lastMessage?.timestamp || b.createdAt).getTime() -
+            new Date(a.lastMessage?.timestamp || a.createdAt).getTime()
         );
       }
     });
@@ -129,7 +128,9 @@ export default function ChatListScreen() {
   if (loading) return <Loader />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Chats</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -148,13 +149,13 @@ export default function ChatListScreen() {
       ) : (
         <FlatList
           data={groups}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id!}
           renderItem={({ item }) => (
             <ChatCard
               group={item}
-              onPress={() => handleChatPress(item.id)}
-              onPin={() => handlePinGroup(item.id)}
-              onDelete={() => handleDeleteGroup(item.id)}
+              onPress={() => handleChatPress(item._id!)}
+              onPin={() => handlePinGroup(item._id!)}
+              onDelete={() => handleDeleteGroup(item._id!)}
             />
           )}
           contentContainerStyle={styles.listContainer}
@@ -168,10 +169,10 @@ export default function ChatListScreen() {
         icon={Plus}
         onPress={() => router.push('/group-create')}
         style={{
-    position: 'absolute',
-    bottom: insets.bottom + 10, 
-    right: 25,
-  }}
+          position: 'absolute',
+          bottom: insets.bottom + 10,
+          right: 25,
+        }}
       />
 
       <Modal
@@ -182,22 +183,31 @@ export default function ChatListScreen() {
       >
         <View style={styles.overlay}>
           <View style={[styles.dialog, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.dialogTitle, { color: colors.text }]}>Delete Chat?</Text>
-            <Text style={[styles.dialogMessage, { color: colors.textSecondary }]}>
-              Are you sure you want to delete this chat? This action cannot be undone.
+            <Text style={[styles.dialogTitle, { color: colors.text }]}>
+              Delete Chat?
+            </Text>
+            <Text
+              style={[styles.dialogMessage, { color: colors.textSecondary }]}
+            >
+              Are you sure you want to delete this chat? This action cannot be
+              undone.
             </Text>
             <View style={styles.dialogButtons}>
               <TouchableOpacity
                 style={[styles.dialogBtn, { backgroundColor: colors.border }]}
                 onPress={() => setSelectedGroupId(null)}
               >
-                <Text style={[styles.dialogBtnText, { color: colors.text }]}>Cancel</Text>
+                <Text style={[styles.dialogBtnText, { color: colors.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.dialogBtn, { backgroundColor: colors.error }]}
                 onPress={handleDeleteGroupConfirmed}
               >
-                <Text style={[styles.dialogBtnText, { color: '#fff' }]}>Delete</Text>
+                <Text style={[styles.dialogBtnText, { color: '#fff' }]}>
+                  Delete
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -214,8 +224,11 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16 },
   listContainer: { paddingHorizontal: 24, paddingBottom: 100 },
   overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center', alignItems: 'center', padding: 24,
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
   dialog: { width: '100%', borderRadius: 16, padding: 20, elevation: 4 },
   dialogTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
@@ -224,4 +237,3 @@ const styles = StyleSheet.create({
   dialogBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
   dialogBtnText: { fontSize: 16, fontWeight: '600' },
 });
-

@@ -1,179 +1,151 @@
 import { Group, Message, User } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'https://api.chitchat.ai/v1'; // Mock API URL
+const API_BASE_URL = 'http://192.168.142.187:5000/api'; // replace with your backend IP
 
-// Mock user
-const mockUser: User = {
-  id: 'user-1',
-  name: 'John Doe',
-  email: 'john@example.com',
-};
+// Helper to get stored Firebase token
+async function getAuthToken(): Promise<string | null> {
+  const token = await SecureStore.getItemAsync('userToken');
+  console.log('Token being sent:', token);
+  return token;
+}
 
-// Mock groups
-let mockGroups: Group[] = [
-  {
-    id: 'group-1',
-    name: 'Team Discussion',
-    members: ['user-1', 'user-2', 'user-3'],
-    createdAt: '2024-01-15T10:00:00Z',
-    pinned: true,
-    lastMessage: {
-      id: 'msg-3',
-      text: 'Great meeting today!',
-      senderId: 'user-2',
-      senderName: 'Jane Smith',
-      timestamp: '2024-01-15T15:30:00Z',
-      isAI: false,
-      replyTo: {
-        senderName: 'John Doe',
-        text: 'Hey everyone! How are you doing?',
-      },
-    },
-  },
-  {
-    id: 'group-2',
-    name: 'Project Alpha',
-    members: ['user-1', 'user-4', 'user-5'],
-    createdAt: '2024-01-14T09:00:00Z',
-    pinned: false,
-    lastMessage: {
-      id: 'msg-5',
-      text: 'I can help you with the project planning. What specific areas would you like to focus on?',
-      senderId: 'ai-assistant',
-      senderName: 'AI Assistant',
-      timestamp: '2024-01-14T16:45:00Z',
-      isAI: true,
-    },
-  },
-];
-
-// Mock messages
-const mockMessages: Record<string, Message[]> = {
-  'group-1': [
-    {
-      id: 'msg-1',
-      text: 'Hey everyone! How are you doing?',
-      senderId: 'user-1',
-      senderName: 'John Doe',
-      timestamp: '2024-01-15T14:00:00Z',
-      isAI: false,
-    },
-    {
-      id: 'msg-2',
-      text: "I'm here to help with any questions.",
-      senderId: 'ai-assistant',
-      senderName: 'AI Assistant',
-      timestamp: '2024-01-15T14:05:00Z',
-      isAI: true,
-    },
-    {
-      id: 'msg-3',
-      text: 'Great meeting today!',
-      senderId: 'user-2',
-      senderName: 'Jane Smith',
-      timestamp: '2024-01-15T15:30:00Z',
-      isAI: false,
-      replyTo: {
-        senderName: 'John Doe',
-        text: 'Hey everyone! How are you doing?',
-      },
-    },
-  ],
-  'group-2': [
-    {
-      id: 'msg-4',
-      text: 'Starting work on Project Alpha',
-      senderId: 'user-1',
-      senderName: 'John Doe',
-      timestamp: '2024-01-14T16:00:00Z',
-      isAI: false,
-    },
-    {
-      id: 'msg-5',
-      text: 'I can help you with the project planning. What specific areas would you like to focus on?',
-      senderId: 'ai-assistant',
-      senderName: 'AI Assistant',
-      timestamp: '2024-01-14T16:45:00Z',
-      isAI: true,
-    },
-  ],
-};
-
-// Simulate delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Get all groups
-export async function getGroups(): Promise<Group[]> {
-  await delay(800);
-  return [...mockGroups].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    const aTime = new Date(a.lastMessage?.timestamp || a.createdAt).getTime();
-    const bTime = new Date(b.lastMessage?.timestamp || b.createdAt).getTime();
-    return bTime - aTime;
+// ====================
+// 👤 Get user profile
+// ====================
+export async function getProfile(): Promise<User> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/users/me`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  if (!res.ok) throw new Error('Failed to fetch user profile');
+  return res.json();
 }
 
-// Get group by ID
-export async function getGroup(id: string): Promise<Group> {
-  await delay(500);
-  const group = mockGroups.find(g => g.id === id);
-  if (!group) throw new Error('Group not found');
-  return group;
-}
 
-// Create a new group
-export async function createGroup(data: { name: string; members: string[] }): Promise<Group> {
-  await delay(1000);
-  const newGroup: Group = {
-    id: `group-${Date.now()}`,
-    name: data.name,
-    members: ['user-1', ...data.members],
-    createdAt: new Date().toISOString(),
-    pinned: false,
-  };
-  mockGroups.unshift(newGroup);
-  mockMessages[newGroup.id] = [];
-  return newGroup;
-}
 
-// Delete group
-export async function deleteGroup(id: string): Promise<void> {
-  await delay(500);
-  const index = mockGroups.findIndex(g => g.id === id);
-  if (index !== -1) {
-    mockGroups.splice(index, 1);
-    delete mockMessages[id];
+// ====================
+// 🏠 Get all groups
+// ====================
+export async function getGroups(): Promise<Group[]> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/groups`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to fetch groups');
   }
+  return res.json();
 }
 
-// Get messages
+// ====================
+// ➕ Create a new group
+// ====================
+export async function createGroup(name: string, members: string[]): Promise<Group> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/groups`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name, members }),
+  });
+  if (!res.ok) throw new Error('Failed to create group');
+  return res.json();
+}
+
+// ====================
+// 📦 Get group by ID
+// ====================
+export async function getGroup(groupId: string): Promise<Group> {
+  const token = await getAuthToken();
+  // console.log('Token being sent:', token);
+  console.log("Group ID : ", groupId);
+  const res = await fetch(`${API_BASE_URL}/groups/${groupId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to fetch group');
+  }
+  return res.json();
+}
+
+// ====================
+// 💬 Get messages for a group
+// ====================
 export async function getMessages(groupId: string): Promise<Message[]> {
-  await delay(600);
-  return mockMessages[groupId] || [];
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/chat/messages?groupId=${groupId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to fetch messages');
+  }
+  return res.json();
 }
 
-// Send message
-export async function sendMessage(
-  groupId: string,
-  text: string,
-  replyTo?: { senderName: string; text: string }
-): Promise<Message> {
-  await delay(500);
-  const message: Message = {
-    id: `msg-${Date.now()}`,
-    text,
-    senderId: mockUser.id,
-    senderName: mockUser.name,
-    timestamp: new Date().toISOString(),
-    isAI: false,
-    ...(replyTo ? { replyTo } : {}),
-  };
-  if (!mockMessages[groupId]) mockMessages[groupId] = [];
-  mockMessages[groupId].push(message);
+// ====================
+// 📤 Send message to a group
+// ====================
+export async function sendMessage(groupId: string, text: string, replyTo?: { senderName: string, text: string }): Promise<Message> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/chat/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ groupId, content: text, replyTo }),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to send message');
+  }
+  return res.json();
+}
 
-  const group = mockGroups.find(g => g.id === groupId);
-  if (group) group.lastMessage = message;
+// ====================
+// ✏️ Update user profile
+// ====================
+export async function updateProfile(data: Partial<User>): Promise<User> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/users/me`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to ...');
+  }
+  return res.json();
+}
 
-  return message;
+// ====================
+// 👥 Get all users
+// ====================
+export async function getAllUsers(): Promise<User[]> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to ...');
+  }
+  return res.json();
 }

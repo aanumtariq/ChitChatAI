@@ -1,45 +1,83 @@
+import axios from 'axios';
 import { User } from '@/types';
+import { AuthResponse } from '@/types';
+// Replace this with your backend base URL
+const API_BASE_URL = 'http://192.168.142.187:5000/api';
 
-// Mock authentication functions
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export async function loginUser(email: string, password: string): Promise<User> {
-  await delay(1000);
-  
-  // Mock authentication logic
-  if (email === 'demo@example.com' && password === 'password') {
+export async function loginUser(email: string, password: string):  Promise<AuthResponse>{
+  try {
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      email,
+      password,
+    });
     return {
-      id: 'user-1',
-      name: 'Demo User',
-      email: 'demo@example.com',
+      id: response.data.id,
+      name: response.data.name,
+      email: response.data.email,
+      token: response.data.token,
+      // profileImage: response.data.profileImage || '',
     };
+  } catch (error: any) {
+    console.error('Login error:', error);
+    throw new Error(error.response?.data?.message || 'Login failed');
   }
-  
-  // Mock successful login for any valid email/password
-  return {
-    id: 'user-1',
-    name: email.split('@')[0],
-    email,
-  };
 }
 
-export async function registerUser(name: string, email: string, password: string): Promise<User> {
-  await delay(1200);
-  
-  return {
-    id: `user-${Date.now()}`,
-    name,
-    email,
-  };
+export async function registerUser(name: string, email: string, password: string): Promise<AuthResponse>{
+  try {
+    const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+      name,
+      email,
+      password,
+    });
+    return {
+      id: response.data.id,
+      name: response.data.name,
+      email: response.data.email,
+      token: response.data.token,
+      // profileImage: response.data.profileImage || '',
+    };
+  } catch (error: any) {
+    console.error('Register error:', error);
+    throw new Error(error.response?.data?.message || 'Registration failed');
+  }
 }
 
-export async function googleAuth(): Promise<User> {
-  await delay(1500);
-  
-  // Mock Google authentication
-  return {
-    id: 'user-google',
-    name: 'Google User',
-    email: 'google@example.com',
-  };
+
+export async function googleRegister(token: string, name: string, profileImage?: string): Promise<User> {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/google-register`,
+      { name, profileImage },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return {
+      id: response.data.id,
+      name: response.data.name,
+      email: response.data.email,
+      // profileImage: response.data.profileImage || '',
+    };
+  } catch (error: any) {
+    console.error('Google register error:', error);
+    throw new Error(error.response?.data?.message || 'Google registration failed');
+  }
+}
+
+export async function googleLogin(token: string): Promise<User> {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/google-login`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return {
+      id: response.data.id,
+      name: response.data.name,
+      email: response.data.email,
+      // profileImage: response.data.profileImage || '',
+    };
+  } catch (error: any) {
+    console.error('Google login error:', error);
+    throw new Error(error.response?.data?.message || 'Google login failed');
+  }
 }

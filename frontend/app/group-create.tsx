@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView, 
-  Alert 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Users, X } from 'lucide-react-native';
+import { ArrowLeft, Users } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import EmailTagList from '@/components/EmailTagList';
 import { validateEmail } from '@/utils/validators';
-import { createGroup } from '@/services/api';
+import { createGroup, getAllUsers } from '@/services/api';
 
 export default function GroupCreateScreen() {
   const [groupName, setGroupName] = useState('');
@@ -68,13 +68,13 @@ export default function GroupCreateScreen() {
       return;
     }
 
-    setEmails(prev => [...prev, currentEmail]);
+    setEmails((prev) => [...prev, currentEmail]);
     setCurrentEmail('');
     setEmailError('');
   };
 
   const removeEmail = (emailToRemove: string) => {
-    setEmails(prev => prev.filter(email => email !== emailToRemove));
+    setEmails((prev) => prev.filter((email) => email !== emailToRemove));
     setEmailError('');
   };
 
@@ -83,25 +83,31 @@ export default function GroupCreateScreen() {
 
     setLoading(true);
     try {
-      const group = await createGroup({
-        name: groupName.trim(),
-        members: emails,
+      // Fetch all users
+      const users = await getAllUsers();
+      // Map emails to user IDs
+      const userIds = emails.map((email) => {
+        const user = users.find((u) => u.email === email);
+        if (!user) throw new Error(`User not found for email: ${email}`);
+        return user._id || user.id;
       });
-      
-      // Navigate directly to the new group chat
-      // The chat list will be refreshed when user navigates back due to useFocusEffect
-      router.replace(`/group-chat/${group.id}`);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create group');
+      const group = await createGroup(groupName.trim(), userIds);
+      // Navigate to the new group chat using group._id from backend
+      router.replace(`/group-chat/${group._id || group.id}`);
+    } catch (error: any) {
+      console.error('Failed to create group:', error);
+      Alert.alert('Error', error.message || 'Failed to create group');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardView} 
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
@@ -118,7 +124,9 @@ export default function GroupCreateScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.form}>
             <View style={styles.iconContainer}>
-              <View style={[styles.groupIcon, { backgroundColor: colors.primary }]}>
+              <View
+                style={[styles.groupIcon, { backgroundColor: colors.primary }]}
+              >
                 <Users size={32} color={colors.background} strokeWidth={2} />
               </View>
             </View>
@@ -132,9 +140,17 @@ export default function GroupCreateScreen() {
             />
 
             <View style={styles.membersSection}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Members</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                Add members by email address (AI assistant will be included automatically)
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Members
+              </Text>
+              <Text
+                style={[
+                  styles.sectionSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Add members by email address (AI assistant will be included
+                automatically)
               </Text>
 
               <View style={styles.emailInputContainer}>
@@ -158,15 +174,18 @@ export default function GroupCreateScreen() {
               </View>
 
               {emails.length > 0 && (
-                <EmailTagList
-                  emails={emails}
-                  onRemove={removeEmail}
-                />
+                <EmailTagList emails={emails} onRemove={removeEmail} />
               )}
 
               <View style={styles.memberCount}>
-                <Text style={[styles.memberCountText, { color: colors.textSecondary }]}>
-                  {emails.length} member{emails.length !== 1 ? 's' : ''} + AI Assistant
+                <Text
+                  style={[
+                    styles.memberCountText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {emails.length} member{emails.length !== 1 ? 's' : ''} + AI
+                  Assistant
                 </Text>
               </View>
             </View>

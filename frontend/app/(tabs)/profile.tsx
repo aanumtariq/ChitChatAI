@@ -17,6 +17,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { getProfile } from '@/services/api';
 
 interface SettingItem {
   icon: any;
@@ -30,7 +31,7 @@ interface SettingItem {
 
 export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const router = useRouter();
 
   const [notifications, setNotifications] = useState({
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadSettings();
+    fetchUserProfile();
   }, []);
 
   const loadSettings = async () => {
@@ -53,6 +55,15 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.log('Failed to load settings');
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const profile = await getProfile();
+      setUser(profile); // update user in context
+    } catch (error) {
+      console.log('Failed to fetch user profile');
     }
   };
 
@@ -226,6 +237,7 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

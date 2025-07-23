@@ -1,8 +1,11 @@
 export interface User {
   id: string;
+  _id?: string;
   name: string;
   email: string;
 }
+
+export type AuthResponse = User & { token: string };
 
 export interface Message {
   id: string;
@@ -22,6 +25,7 @@ export interface Message {
 
 export interface Group {
   id: string;
+  _id?: string;
   name: string;
   members: string[];
   createdAt: string;
