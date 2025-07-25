@@ -116,7 +116,15 @@ export default function GroupChatScreen() {
       if (!loadedFromStorage) {
         console.log('Fetching messages from backend for group:', id);
         const fetched = await getMessages(id!);
-        setMessages(fetched);
+        const mapped = fetched.map((msg) => ({
+          id: msg.id, // Now backend sends 'id'
+          text: msg.text,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          timestamp: msg.timestamp,
+          isAI: msg.isAI,
+        }));
+        setMessages(mapped);
         setPinnedMessage(null);
         setReplyTo(null);
       }
