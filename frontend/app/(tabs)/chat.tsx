@@ -37,8 +37,8 @@ export default function OnlineUsersScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>👥 Users</Text>
-      {users.map(u => {
-        const isOnline = onlineUsers.includes(u._id);
+      {users.map((u) => {
+        const isOnline = onlineUsers.includes(u.id);
         return (
           <View key={u._id} style={styles.userRow}>
             <Text style={styles.userName}>{u.name}</Text>

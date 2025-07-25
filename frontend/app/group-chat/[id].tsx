@@ -116,7 +116,7 @@ export default function GroupChatScreen() {
       if (!loadedFromStorage) {
         console.log('Fetching messages from backend for group:', id);
         const fetched = await getMessages(id!);
-        const mapped = fetched.map((msg) => ({
+        let mapped = fetched.map((msg) => ({
           id: msg.id, // Now backend sends 'id'
           text: msg.text,
           senderId: msg.senderId,
@@ -124,6 +124,16 @@ export default function GroupChatScreen() {
           timestamp: msg.timestamp,
           isAI: msg.isAI,
         }));
+
+        // Filter out messages sent before the user's clear time
+        const clearKey = `${user?.id}_group_${id}_clearedAt`;
+        const clearedAt = await AsyncStorage.getItem(clearKey);
+        if (clearedAt) {
+          mapped = mapped.filter(
+            (msg) => new Date(msg.timestamp).getTime() > Number(clearedAt)
+          );
+        }
+
         setMessages(mapped);
         setPinnedMessage(null);
         setReplyTo(null);
@@ -243,7 +253,15 @@ export default function GroupChatScreen() {
         setMessages([]);
         setPinnedMessage(null);
         setReplyTo(null);
+
+        // Store the clear timestamp for this user and group
+        const clearKey = `${user?.id}_group_${id}_clearedAt`;
+        await AsyncStorage.setItem(clearKey, Date.now().toString());
+
+        // Remove local message storage as before
+        await AsyncStorage.removeItem(storageKey);
         await AsyncStorage.removeItem(`@lastMessage_${id}`);
+
         setConfirmationModal({ ...confirmationModal, visible: false });
       },
     });

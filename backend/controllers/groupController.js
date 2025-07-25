@@ -52,7 +52,7 @@ exports.getGroupById = async (req, res) => {
   try {
     console.log("Request Params : ", req.params);
     // console.log('Fetching group by ID:', id);
-    const group = await Group.findById(id);
+    const group = await Group.findById(id).populate('members', 'name email');;
     if (!group) {
       return res.status(404).json({ message: 'Group not found' });
     }
