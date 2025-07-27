@@ -1,4 +1,7 @@
 const Group = require('../models/Group');
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 /**
  * Create a new group
@@ -16,10 +19,7 @@ exports.createGroup = async (req, res) => {
 
     await newGroup.save();
 
-    res.status(201).json({
-      message: '✅ Group created successfully',
-      group: newGroup
-    });
+    res.status(201).json(newGroup);
   } catch (error) {
     console.error('❌ Failed to create group:', error.message);
     res.status(500).json({ message: 'Server error' });
@@ -33,7 +33,27 @@ exports.createGroup = async (req, res) => {
  */
 exports.getGroups = async (req, res) => {
   try {
-    const groups = await Group.find();
+    // Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No token provided.' });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Invalid token format.' });
+    }
+
+    // Decode token to get user id
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid or expired token.' });
+    }
+    const userId = decoded.id;
+
+    // Only find groups where the user is a member
+    const groups = await Group.find({ members: userId });
     res.status(200).json(groups);
   } catch (error) {
     console.error('❌ Failed to fetch groups:', error.message);

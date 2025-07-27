@@ -101,18 +101,18 @@ export default function GroupChatScreen() {
   const loadMessagesFromStorage = async () => {
     try {
       setLoading(true);
-      const stored = await AsyncStorage.getItem(storageKey);
+      // const stored = await AsyncStorage.getItem(storageKey);
       let loadedFromStorage = false;
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.messages && parsed.messages.length > 0) {
-          setMessages(parsed.messages);
-          setPinnedMessage(parsed.pinnedMessage || null);
-          setReplyTo(null);
-          loadedFromStorage = true;
-          console.log('Loaded messages from storage:', parsed.messages.length);
-        }
-      }
+      // if (stored) {
+      //   const parsed = JSON.parse(stored);
+      //   if (parsed.messages && parsed.messages.length > 0) {
+      //     setMessages(parsed.messages);
+      //     setPinnedMessage(parsed.pinnedMessage || null);
+      //     setReplyTo(null);
+      //     loadedFromStorage = true;
+      //     console.log('Loaded messages from storage:', parsed.messages.length);
+      //   }
+      // }
       if (!loadedFromStorage) {
         console.log('Fetching messages from backend for group:', id);
         const fetched = await getMessages(id!);

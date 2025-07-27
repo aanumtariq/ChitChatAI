@@ -31,21 +31,22 @@ exports.getMessages = async (req, res) => {
 // @route   POST /api/chat/messages
 // @access  Private (requires authentication)
 exports.sendMessage = async (req, res) => {
-  const { content, groupId, replyTo } = req.body;
-  const uid = req.user.uid; // from firebaseAuth middleware
+  const { content, groupId, replyTo, userId} = req.body;
+  const uid = userId; // from firebaseAuth middleware
+  console.log("UID :",uid);
 
   if (!content || !groupId) {
     return res.status(400).json({ message: 'Content and groupId are required' });
   }
 
   try {
-    const user = await User.findOne({ uid });
+    const user = await User.findOne({ _id: uid });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const newMsg = new ChatMessage({
-      user: user._id,
+      user: uid,
       content,
       groupId,
       createdAt: new Date(),

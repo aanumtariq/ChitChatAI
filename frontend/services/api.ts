@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.214.187:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://192.168.61.187:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
@@ -97,13 +97,16 @@ export async function getMessages(groupId: string): Promise<Message[]> {
 // ====================
 export async function sendMessage(groupId: string, text: string, replyTo?: { senderName: string, text: string }): Promise<Message> {
   const token = await getAuthToken();
+  const user = await SecureStore.getItemAsync('user');
+  const userData:User = JSON.parse(user || '{}');
+  console.log("User Data :",userData);
   const res = await fetch(`${API_BASE_URL}/chat/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ groupId, content: text, replyTo }),
+    body: JSON.stringify({ groupId, content: text, replyTo,userId:userData.id}),
   });
   if (!res.ok) {
     const errorText = await res.text();
