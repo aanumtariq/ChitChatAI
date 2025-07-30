@@ -10,7 +10,7 @@ exports.getMessages = async (req, res) => {
     const filter = groupId ? { groupId } : {};
     const messages = await ChatMessage
       .find(filter)
-      .sort({ createdAt: -1 }) // latest first
+      .sort({ createdAt: 1 }) // oldest first (WhatsApp style)
       .populate('user', 'name profileImage'); // only show needed fields
     const mapped = messages.map(msg => ({
       id: msg._id,

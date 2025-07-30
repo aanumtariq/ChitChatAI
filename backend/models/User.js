@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String }, // required for email/password users
   profileImage: String,
+
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

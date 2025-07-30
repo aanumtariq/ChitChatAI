@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  Modal,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -11,7 +19,7 @@ import {
   Moon,
   Sun,
   Share,
-  X
+  X,
 } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -31,7 +39,7 @@ interface SettingItem {
 
 export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
-  const { user, setUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const [notifications, setNotifications] = useState({
@@ -61,15 +69,22 @@ export default function ProfileScreen() {
   const fetchUserProfile = async () => {
     try {
       const profile = await getProfile();
-      setUser(profile); // update user in context
+      // Note: We can't update user in context since setUser is not exposed
+      // The profile will be updated on next app restart
+      console.log('Profile fetched:', profile);
     } catch (error) {
       console.log('Failed to fetch user profile');
     }
   };
 
-  const saveNotificationSettings = async (newSettings: typeof notifications) => {
+  const saveNotificationSettings = async (
+    newSettings: typeof notifications
+  ) => {
     try {
-      await SecureStore.setItemAsync('notification_settings', JSON.stringify(newSettings));
+      await SecureStore.setItemAsync(
+        'notification_settings',
+        JSON.stringify(newSettings)
+      );
       setNotifications(newSettings);
     } catch (error) {
       console.log('Failed to save settings');
@@ -93,7 +108,8 @@ export default function ProfileScreen() {
       subtitle: 'Receive notifications for new messages',
       showSwitch: true,
       switchValue: notifications.push,
-      onSwitchChange: (value) => saveNotificationSettings({ ...notifications, push: value }),
+      onSwitchChange: (value) =>
+        saveNotificationSettings({ ...notifications, push: value }),
     },
     {
       icon: Bell,
@@ -101,7 +117,8 @@ export default function ProfileScreen() {
       subtitle: 'Get notified when mentioned',
       showSwitch: true,
       switchValue: notifications.mentions,
-      onSwitchChange: (value) => saveNotificationSettings({ ...notifications, mentions: value }),
+      onSwitchChange: (value) =>
+        saveNotificationSettings({ ...notifications, mentions: value }),
     },
     {
       icon: Bell,
@@ -109,7 +126,8 @@ export default function ProfileScreen() {
       subtitle: 'Show message content in notifications',
       showSwitch: true,
       switchValue: notifications.previews,
-      onSwitchChange: (value) => saveNotificationSettings({ ...notifications, previews: value }),
+      onSwitchChange: (value) =>
+        saveNotificationSettings({ ...notifications, previews: value }),
     },
   ];
 
@@ -142,63 +160,89 @@ export default function ProfileScreen() {
   const renderSettingItem = (item: SettingItem) => (
     <TouchableOpacity
       key={item.title}
-      style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
+      style={[
+        styles.settingItem,
+        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+      ]}
       onPress={item.onPress}
       disabled={item.showSwitch}
-      activeOpacity={0.7}
     >
-      <View style={styles.settingContent}>
+      <View style={styles.settingLeft}>
         <item.icon size={24} color={colors.primary} strokeWidth={2} />
         <View style={styles.settingText}>
-          <Text style={[styles.settingTitle, { color: colors.text }]}>{item.title}</Text>
+          <Text style={[styles.settingTitle, { color: colors.text }]}>
+            {item.title}
+          </Text>
           {item.subtitle && (
-            <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.settingSubtitle, { color: colors.textSecondary }]}
+            >
               {item.subtitle}
             </Text>
           )}
         </View>
       </View>
-      {item.showSwitch ? (
-        <Switch
-          value={item.switchValue}
-          onValueChange={item.onSwitchChange}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          thumbColor={colors.background}
-        />
-      ) : (
-        <ChevronRight size={20} color={colors.textSecondary} />
-      )}
+      <View style={styles.settingRight}>
+        {item.showSwitch ? (
+          <Switch
+            value={item.switchValue}
+            onValueChange={item.onSwitchChange}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.background}
+          />
+        ) : (
+          <ChevronRight size={20} color={colors.textSecondary} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <User size={32} color={colors.background} strokeWidth={2} />
           </View>
-          <Text style={[styles.name, { color: colors.text }]}>{user?.name}</Text>
-          <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
+          <Text style={[styles.name, { color: colors.text }]}>
+            {user?.name}
+          </Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>
+            {user?.email}
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
-          <View style={[styles.settingsGroup, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Notifications
+          </Text>
+          <View
+            style={[styles.settingsGroup, { backgroundColor: colors.surface }]}
+          >
             {notificationSettings.map(renderSettingItem)}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
-          <View style={[styles.settingsGroup, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Appearance
+          </Text>
+          <View
+            style={[styles.settingsGroup, { backgroundColor: colors.surface }]}
+          >
             {appearanceSettings.map(renderSettingItem)}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Other</Text>
-          <View style={[styles.settingsGroup, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Other
+          </Text>
+          <View
+            style={[styles.settingsGroup, { backgroundColor: colors.surface }]}
+          >
             {otherSettings.map(renderSettingItem)}
           </View>
         </View>
@@ -209,26 +253,38 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Confirm Logout</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Confirm Logout
+              </Text>
               <TouchableOpacity onPress={() => setShowLogoutModal(false)}>
                 <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-              Are you sure you want to log out of your account?
+              Are you sure you want to logout? You'll need to sign in again to
+              access your account.
             </Text>
-            <View style={styles.modalActions}>
+            <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.border }]}
+                style={[styles.modalButton, { borderColor: colors.border }]}
                 onPress={() => setShowLogoutModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: colors.primary },
+                ]}
                 onPress={handleLogoutConfirm}
               >
-                <Text style={[styles.modalButtonText, { color: colors.background }]}>Logout</Text>
+                <Text
+                  style={[styles.modalButtonText, { color: colors.background }]}
+                >
+                  Logout
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -238,14 +294,13 @@ export default function ProfileScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
   header: {
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 32,
+    paddingVertical: 30,
   },
   avatar: {
     width: 80,
@@ -255,17 +310,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  name: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  email: { fontSize: 16 },
-  section: { marginBottom: 32 },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 16,
+  },
+  section: {
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    paddingHorizontal: 24,
     marginBottom: 12,
   },
   settingsGroup: {
-    marginHorizontal: 24,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -277,50 +339,67 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
   },
-  settingContent: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  settingText: { flex: 1, marginLeft: 16 },
-  settingTitle: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
-  settingSubtitle: { fontSize: 14 },
-
-  // 🔥 Modal styles
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  settingSubtitle: {
+    fontSize: 14,
+  },
+  settingRight: {
+    alignItems: 'center',
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: '#00000088',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
   },
   modalBox: {
-    width: '100%',
-    borderRadius: 16,
+    marginHorizontal: 20,
+    borderRadius: 12,
     padding: 20,
+    width: '100%',
+    maxWidth: 400,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   modalText: {
-    fontSize: 15,
+    fontSize: 16,
+    lineHeight: 24,
     marginBottom: 20,
   },
-  modalActions: {
+  modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     gap: 12,
   },
   modalButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
   },
   modalButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

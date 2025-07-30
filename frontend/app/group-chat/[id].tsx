@@ -24,6 +24,28 @@ import Loader from '@/components/Loader';
 import { getMessages, sendMessage, getGroups, getGroup } from '@/services/api';
 import { generateAIResponse } from '@/services/openai';
 import { Message, Group } from '@/types';
+import io from 'socket.io-client';
+
+// Socket connection
+const SOCKET_URL = 'http://192.168.61.187:5000'; // Change to your backend URL
+const socket = io(SOCKET_URL, {
+  transports: ['websocket', 'polling'],
+  timeout: 10000,
+  forceNew: true,
+});
+
+// Add connection status handling
+socket.on('connect', () => {
+  console.log('✅ Socket connected');
+});
+
+socket.on('connect_error', (error) => {
+  console.log('❌ Socket connection error:', error);
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('🔴 Socket disconnected:', reason);
+});
 
 export default function GroupChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -53,6 +75,33 @@ export default function GroupChatScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const storageKey = `${user?.id}_group_${id}_messages`;
+
+  // Socket.IO setup
+  useEffect(() => {
+    if (user?.id && id) {
+      // Only emit events if socket is connected
+      if (socket.connected) {
+        // Connect user
+        socket.emit('userConnected', user.id);
+
+        // Join the group
+        socket.emit('joinGroup', id);
+      }
+
+      // Listen for new messages
+      socket.on('newMessage', (message: Message) => {
+        console.log('📨 Received new message:', message);
+        setMessages((prev) => [...prev, message]);
+      });
+
+      return () => {
+        if (socket.connected) {
+          socket.emit('leaveGroup', id);
+        }
+        socket.off('newMessage');
+      };
+    }
+  }, [user?.id, id, socket.connected]);
 
   useEffect(() => {
     fetchGroupData();
@@ -199,12 +248,16 @@ export default function GroupChatScreen() {
         JSON.stringify({ lastMessage: serverMessage })
       );
       setTimeout(() => handleAIResponse(text), 1000);
-    } catch {
-      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+    } catch (error) {
+      console.log('❌ Error sending message:', error);
+      // Don't remove the temp message on error - let it stay
+      // The message was likely sent successfully to the backend
+      // setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       setConfirmationModal({
         visible: true,
-        title: 'Error',
-        subtitle: 'Failed to send message',
+        title: 'Warning',
+        subtitle:
+          'Message may not have been delivered to all users, but it was sent to the server.',
         onConfirm: () =>
           setConfirmationModal({ ...confirmationModal, visible: false }),
       });

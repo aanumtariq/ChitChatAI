@@ -50,8 +50,6 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/groups', groupRoutes);
-// app.use('/api/groups', authenticateUser, groupRoutes);
-app.use('/api/users', require('./routes/userRoutes'));
 
 
 // ====================

@@ -148,7 +148,9 @@ export async function getAllUsers(): Promise<User[]> {
   if (!res.ok) {
     const errorText = await res.text();
     console.log('API error:', res.status, errorText);
-    throw new Error('Failed to ...');
+    throw new Error('Failed to fetch users');
   }
   return res.json();
 }
+
+

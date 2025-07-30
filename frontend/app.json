@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true
     },
+
     "web": {
       "bundler": "metro",
       "output": "single",
