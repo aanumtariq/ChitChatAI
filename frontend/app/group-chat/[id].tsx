@@ -97,7 +97,16 @@ export default function GroupChatScreen() {
         console.log('📨 Received new message:', message);
         // Don't add if it's from the current user (already added)
         if (message.senderId !== user.id) {
-          setMessages((prev) => [...prev, message]);
+          setMessages((prev) => {
+            const updatedMessages = [...prev, message];
+            // Save the last message when receiving new messages
+            const lastMessage = updatedMessages[updatedMessages.length - 1];
+            AsyncStorage.setItem(
+              `@lastMessage_${id}`,
+              JSON.stringify({ lastMessage })
+            ).catch(() => console.warn('Failed to save last message'));
+            return updatedMessages;
+          });
         }
       });
 
@@ -249,9 +258,12 @@ export default function GroupChatScreen() {
             : msg
         )
       );
+      // Save the actual last message from the conversation (not just the user's sent message)
+      const allMessages = [...messages, serverMessage];
+      const lastMessage = allMessages[allMessages.length - 1];
       await AsyncStorage.setItem(
         `@lastMessage_${id}`,
-        JSON.stringify({ lastMessage: serverMessage })
+        JSON.stringify({ lastMessage })
       );
       setTimeout(() => handleAIResponse(text), 1000);
     } catch (error) {
@@ -283,6 +295,14 @@ export default function GroupChatScreen() {
         isAI: true,
       };
       setMessages((prev) => [...prev, aiMessage]);
+
+      // Update the last message to include AI response
+      const allMessages = [...messages, aiMessage];
+      const lastMessage = allMessages[allMessages.length - 1];
+      await AsyncStorage.setItem(
+        `@lastMessage_${id}`,
+        JSON.stringify({ lastMessage })
+      );
     } finally {
       setAiTyping(false);
     }

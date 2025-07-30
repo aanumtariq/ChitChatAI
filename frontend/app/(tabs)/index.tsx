@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGroups } from '@/services/api';
 import { Group } from '@/types';
 import Toast from 'react-native-toast-message';
+import { getMessages } from '@/services/api';
 
 export default function ChatListScreen() {
   const insets = useSafeAreaInsets();
@@ -37,17 +38,30 @@ export default function ChatListScreen() {
   const updateGroupLastMessages = async (groupsData: Group[]) => {
     const updated = await Promise.all(
       groupsData.map(async (group) => {
-        const key = `@lastMessage_${group._id}`;
-        const stored = await AsyncStorage.getItem(key);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            return { ...group, lastMessage: parsed?.lastMessage || null };
-          } catch {
-            return group;
+        try {
+          // Fetch the actual last message from the backend
+          const messages = await getMessages(group._id || group.id);
+          const lastMessage =
+            messages.length > 0 ? messages[messages.length - 1] : null;
+          return { ...group, lastMessage };
+        } catch (error) {
+          console.log(
+            `Failed to fetch messages for group ${group._id}:`,
+            error
+          );
+          // Fallback to stored message if API fails
+          const key = `@lastMessage_${group._id}`;
+          const stored = await AsyncStorage.getItem(key);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              return { ...group, lastMessage: parsed?.lastMessage || null };
+            } catch {
+              return group;
+            }
           }
+          return group;
         }
-        return group;
       })
     );
     return updated;
