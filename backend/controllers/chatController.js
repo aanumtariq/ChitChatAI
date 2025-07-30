@@ -1,5 +1,6 @@
 const ChatMessage = require('../models/ChatMessage');
 const User = require('../models/User');
+const { getIO } = require('../utils/socket');
 
 // @desc    Get all chat messages
 // @route   GET /api/chat/messages
@@ -56,14 +57,21 @@ exports.sendMessage = async (req, res) => {
     // Optionally populate the user info in the response:
     await newMsg.populate('user', 'name profileImage');
 
-    res.status(201).json({
+    const messageData = {
       id: newMsg._id,
       text: newMsg.content,
       senderId: newMsg.user?._id,
       senderName: newMsg.user?.name || 'Unknown',
       timestamp: newMsg.createdAt,
       isAI: false,
-    });
+      groupId: groupId, // Add groupId for frontend filtering
+    };
+    console.log("Before Broadcasting Message");
+    // Broadcast message to all users in the group
+    const io = getIO();
+    io.to(groupId).emit('newMessage', messageData);
+    console.log("After Broadcasting Message");
+    res.status(201).json(messageData);
   } catch (error) {
     console.error('❌ Error sending message:', error);
     res.status(500).json({ message: 'Server error' });

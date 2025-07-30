@@ -79,29 +79,47 @@ export default function GroupChatScreen() {
   // Socket.IO setup
   useEffect(() => {
     if (user?.id && id) {
-      // Only emit events if socket is connected
-      if (socket.connected) {
-        // Connect user
+      // Connect user and join group when socket is ready
+      const handleSocketReady = () => {
         socket.emit('userConnected', user.id);
-
-        // Join the group
         socket.emit('joinGroup', id);
+        console.log('✅ Joined group:', id);
+      };
+
+      if (socket.connected) {
+        handleSocketReady();
+      } else {
+        socket.on('connect', handleSocketReady);
       }
 
       // Listen for new messages
       socket.on('newMessage', (message: Message) => {
         console.log('📨 Received new message:', message);
-        setMessages((prev) => [...prev, message]);
+        // Don't add if it's from the current user (already added)
+        if (message.senderId !== user.id) {
+          setMessages((prev) => [...prev, message]);
+        }
       });
 
       return () => {
-        if (socket.connected) {
-          socket.emit('leaveGroup', id);
-        }
+        socket.emit('leaveGroup', id);
+        socket.off('connect', handleSocketReady);
         socket.off('newMessage');
       };
     }
-  }, [user?.id, id, socket.connected]);
+  }, [user?.id, id]);
+
+  // Mark messages as read when user is in the chat
+  useEffect(() => {
+    if (user?.id && id && messages.length > 0) {
+      // Emit read status to backend (you can implement this endpoint)
+      // socket.emit('markAsRead', { groupId: id, userId: user.id });
+
+      // Update local unread count
+      const key = `@unreadCount_${id}`;
+      AsyncStorage.setItem(key, '0');
+    }
+  }, [user?.id, id, messages.length]);
 
   useEffect(() => {
     fetchGroupData();

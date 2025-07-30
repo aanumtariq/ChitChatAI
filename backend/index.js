@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const socketIO = require('socket.io');
 const onlineUsers = new Map(); // userId -> socketId
 require('dotenv').config();
+const { initializeSocket } = require('./utils/socket');
 
 const connectDB = require('./config/db');
 const authenticateUser = require('./middleware/firebaseAuth');
@@ -29,12 +29,7 @@ const server = http.createServer(app);
 // ====================
 // 📡 Socket.IO setup
 // ====================
-const io = socketIO(server, {
-  cors: {
-    origin: '*', // ⚠ Replace with frontend URL in production
-    methods: ['GET', 'POST'],
-  },
-});
+const io = initializeSocket(server);
 
 // ====================
 // 🛡 Middleware
@@ -68,6 +63,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('joinGroup', (groupId) => {
+    socket.join(groupId);
+    console.log(`👥 User joined group: ${groupId}`);
+  });
+
+  socket.on('leaveGroup', (groupId) => {
+    socket.leave(groupId);
+    console.log(`👋 User left group: ${groupId}`);
+  });
+
   socket.on('disconnect', () => {
     console.log('🔴 Client disconnected:', socket.id);
     for (const [userId, sId] of onlineUsers.entries()) {
@@ -80,6 +85,8 @@ io.on('connection', (socket) => {
     io.emit('onlineUsers', Array.from(onlineUsers.keys()));
   });
 });
+
+
 
 
 

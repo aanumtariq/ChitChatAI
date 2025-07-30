@@ -21,9 +21,17 @@ import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGroups } from '@/services/api';
-import { deleteGroup } from '@/services/api';
 import { Group } from '@/types';
 import Toast from 'react-native-toast-message';
+import io from 'socket.io-client';
+
+// Socket connection for real-time updates
+const SOCKET_URL = 'http://192.168.61.187:5000';
+const socket = io(SOCKET_URL, {
+  transports: ['websocket', 'polling'],
+  timeout: 10000,
+  forceNew: true,
+});
 
 export default function ChatListScreen() {
   const insets = useSafeAreaInsets();
@@ -78,10 +86,50 @@ export default function ChatListScreen() {
     fetchGroups();
   }, []);
 
+  // Real-time message listening
+  useEffect(() => {
+    if (user?.id) {
+      socket.emit('userConnected', user.id);
+
+      socket.on('newMessage', (message: any) => {
+        console.log('📨 New message received in chat list:', message);
+        // Update the group's last message and move to top
+        setGroups((prev) => {
+          const updatedGroups = prev.map((group) => {
+            if (group._id === message.groupId) {
+              return {
+                ...group,
+                lastMessage: message,
+                unreadCount: (group.unreadCount || 0) + 1,
+              };
+            }
+            return group;
+          });
+
+          // Move the updated group to the top (most recent message)
+          const updatedGroup = updatedGroups.find(
+            (g) => g._id === message.groupId
+          );
+          if (updatedGroup) {
+            const filteredGroups = updatedGroups.filter(
+              (g) => g._id !== message.groupId
+            );
+            return [updatedGroup, ...filteredGroups];
+          }
+          return updatedGroups;
+        });
+      });
+
+      return () => {
+        socket.off('newMessage');
+      };
+    }
+  }, [user?.id]);
+
   const handleDeleteGroupConfirmed = async () => {
     if (!selectedGroupId) return;
     try {
-      await deleteGroup(selectedGroupId);
+      // TODO: Implement deleteGroup API call
       setGroups((prev) => prev.filter((g) => g._id !== selectedGroupId));
       Toast.show({
         type: 'success',
@@ -122,6 +170,15 @@ export default function ChatListScreen() {
   };
 
   const handleChatPress = (groupId: string) => {
+    // Reset unread count when entering chat
+    setGroups((prev) =>
+      prev.map((group) => {
+        if (group._id === groupId) {
+          return { ...group, unreadCount: 0 };
+        }
+        return group;
+      })
+    );
     router.push(`/group-chat/${groupId}`);
   };
 
