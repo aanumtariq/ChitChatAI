@@ -31,5 +31,4 @@ export interface Group {
   createdAt: string;
   pinned?: boolean;
   lastMessage?: Message;
-  unreadCount?: number;
 }

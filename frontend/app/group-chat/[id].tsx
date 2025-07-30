@@ -109,18 +109,6 @@ export default function GroupChatScreen() {
     }
   }, [user?.id, id]);
 
-  // Mark messages as read when user is in the chat
-  useEffect(() => {
-    if (user?.id && id && messages.length > 0) {
-      // Emit read status to backend (you can implement this endpoint)
-      // socket.emit('markAsRead', { groupId: id, userId: user.id });
-
-      // Update local unread count
-      const key = `@unreadCount_${id}`;
-      AsyncStorage.setItem(key, '0');
-    }
-  }, [user?.id, id, messages.length]);
-
   useEffect(() => {
     fetchGroupData();
     loadMessagesFromStorage();

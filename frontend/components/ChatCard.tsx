@@ -64,31 +64,14 @@ export default function ChatCard({
             </Text>
           </View>
 
-          <View style={styles.messageRow}>
-            <Text
-              style={[styles.lastMessage, { color: colors.textSecondary }]}
-              numberOfLines={2}
-            >
-              {group.lastMessage
-                ? `${group.lastMessage.senderName}: ${group.lastMessage.text}`
-                : 'No messages yet'}
-            </Text>
-
-            {group.unreadCount && group.unreadCount > 0 && (
-              <View
-                style={[
-                  styles.unreadBadge,
-                  { backgroundColor: colors.primary },
-                ]}
-              >
-                <Text
-                  style={[styles.unreadCount, { color: colors.background }]}
-                >
-                  {group.unreadCount > 99 ? '99+' : group.unreadCount}
-                </Text>
-              </View>
-            )}
-          </View>
+          <Text
+            style={[styles.lastMessage, { color: colors.textSecondary }]}
+            numberOfLines={2}
+          >
+            {group.lastMessage
+              ? `${group.lastMessage.senderName}: ${group.lastMessage.text}`
+              : 'No messages yet'}
+          </Text>
 
           <Text style={[styles.memberCount, { color: colors.textSecondary }]}>
             {group.members.length} members + AI
@@ -177,29 +160,10 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 12,
   },
-  messageRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 4,
-  },
   lastMessage: {
     fontSize: 14,
     lineHeight: 18,
-    flex: 1,
-    marginRight: 8,
-  },
-  unreadBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  unreadCount: {
-    fontSize: 12,
-    fontWeight: '600',
+    marginBottom: 4,
   },
   memberCount: {
     fontSize: 12,
