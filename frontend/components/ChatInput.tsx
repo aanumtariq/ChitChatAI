@@ -56,7 +56,6 @@ export default function ChatInput({
 
       <View style={styles.inputRow}>
         <TextInput
-
           style={[
             styles.input,
             {

@@ -46,16 +46,10 @@ app.use(express.json());
 // 📦 API ROUTES
 // ====================
 app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', chatRoutes); // ✅ Includes /chat/ai-message
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/groups', groupRoutes);
-
-app.use('/api/ai', require('./routes/aiRoutes'));
-
-// app.use('/api/groups', authenticateUser, groupRoutes);
-app.use('/api/users', require('./routes/userRoutes'));
-
 
 // ====================
 // 💬 SOCKET.IO EVENTS
@@ -86,8 +80,6 @@ io.on('connection', (socket) => {
   });
 });
 
-
-
 // ====================
 // 🧪 Test Route
 // ====================
@@ -99,7 +91,7 @@ app.get('/api/test', (req, res) => {
 // 📄 Swagger Docs
 // ====================
 const swaggerDocs = require('./swagger');
-swaggerDocs(app);
+swaggerDocs(app); // ✅ Registers Swagger UI
 
 // ====================
 // 🚀 Start Server

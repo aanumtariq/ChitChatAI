@@ -1,9 +1,20 @@
+<<<<<<< HEAD
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+=======
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
+>>>>>>> b5cbc6b (AI Integration working now)
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react-native';
+<<<<<<< HEAD
 
 // Mock Data
 const mockMembers = [
@@ -11,16 +22,45 @@ const mockMembers = [
   { id: '2', name: 'Jane Smith' },
   { id: 'ai-assistant', name: 'AI Assistant'/*  */ },
 ];
+=======
+import { getGroup } from '@/services/api'; // Make sure this import exists
+>>>>>>> b5cbc6b (AI Integration working now)
 
 export default function GroupMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const router = useRouter();
+<<<<<<< HEAD
   const [members, setMembers] = useState(mockMembers);
 
   useEffect(() => {
     // In real use, you’d fetch from backend here
     console.log('Group ID:', id);
+=======
+  // const [members, setMembers] = useState(mockMembers);
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchMembers() {
+      if (!id) return;
+      try {
+        const group = await getGroup(id);
+        let memberList: { id: string; name: string }[] = [];
+        if (Array.isArray(group.members) && group.members.length > 0) {
+          memberList = group.members.map((user: any) => ({
+            id: user._id || user.id,
+            name: user.name || user.email || 'Unknown',
+          }));
+        }
+        // Add AI Assistant
+        memberList.push({ id: 'ai-assistant', name: 'AI Assistant' });
+        setMembers(memberList);
+      } catch (err) {
+        setMembers([{ id: 'ai-assistant', name: 'AI Assistant' }]);
+      }
+    }
+    fetchMembers();
+>>>>>>> b5cbc6b (AI Integration working now)
   }, [id]);
 
   const renderMember = ({ item }: { item: { id: string; name: string } }) => (
@@ -30,9 +70,22 @@ export default function GroupMembersScreen() {
           {item.name[0].toUpperCase()}
         </Text>
       </View>
+<<<<<<< HEAD
       <Text style={[styles.memberName, { color: colors.text }]}>{item.name}</Text>
       {item.id === 'ai-assistant' && (
         <Text style={[styles.roleTag, { backgroundColor: colors.primary, color: colors.background }]}>
+=======
+      <Text style={[styles.memberName, { color: colors.text }]}>
+        {item.name}
+      </Text>
+      {item.id === 'ai-assistant' && (
+        <Text
+          style={[
+            styles.roleTag,
+            { backgroundColor: colors.primary, color: colors.background },
+          ]}
+        >
+>>>>>>> b5cbc6b (AI Integration working now)
           AI
         </Text>
       )}
@@ -40,12 +93,28 @@ export default function GroupMembersScreen() {
   );
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Group Members</Text>
+=======
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <ArrowLeft size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Group Members
+        </Text>
+>>>>>>> b5cbc6b (AI Integration working now)
       </View>
 
       <FlatList

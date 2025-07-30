@@ -35,9 +35,8 @@ const options = {
       },
     ],
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/*.js'], // Make sure all route files have swagger annotations
 };
-
 
 const swaggerSpec = swaggerJSDoc(options);
 

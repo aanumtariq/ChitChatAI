@@ -92,8 +92,9 @@ export default function GroupCreateScreen() {
         return user._id || user.id;
       });
       const group = await createGroup(groupName.trim(), userIds);
+      console.log('Group : ', group);
       // Navigate to the new group chat using group._id from backend
-      router.replace(`/group-chat/${group._id || group.id}`);
+      router.replace(`/group-chat/${group._id}`);
     } catch (error: any) {
       console.error('Failed to create group:', error);
       Alert.alert('Error', error.message || 'Failed to create group');

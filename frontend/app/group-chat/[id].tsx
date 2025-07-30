@@ -21,8 +21,8 @@ import ChatBubble from '@/components/ChatBubble';
 import ChatInput from '@/components/ChatInput';
 import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
-import { getMessages as fetchMessagesFromApi, sendMessage, getGroups, getGroup } from '@/services/api';
-import { generateAIResponse } from '@/services/gemini';
+import { getMessages, sendMessage, getGroups, getGroup } from '@/services/api';
+import { sendAIMessage } from '@/services/api';
 import { Message, Group } from '@/types';
 
 export default function GroupChatScreen() {
@@ -101,22 +101,40 @@ export default function GroupChatScreen() {
   const loadMessagesFromStorage = async () => {
     try {
       setLoading(true);
-      const stored = await AsyncStorage.getItem(storageKey);
+      // const stored = await AsyncStorage.getItem(storageKey);
       let loadedFromStorage = false;
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.messages && parsed.messages.length > 0) {
-          setMessages(parsed.messages);
-          setPinnedMessage(parsed.pinnedMessage || null);
-          setReplyTo(null);
-          loadedFromStorage = true;
-          console.log('Loaded messages from storage:', parsed.messages.length);
-        }
-      }
+      // if (stored) {
+      //   const parsed = JSON.parse(stored);
+      //   if (parsed.messages && parsed.messages.length > 0) {
+      //     setMessages(parsed.messages);
+      //     setPinnedMessage(parsed.pinnedMessage || null);
+      //     setReplyTo(null);
+      //     loadedFromStorage = true;
+      //     console.log('Loaded messages from storage:', parsed.messages.length);
+      //   }
+      // }
       if (!loadedFromStorage) {
         console.log('Fetching messages from backend for group:', id);
-        const fetched = await fetchMessagesFromApi(id!);
-        setMessages(fetched);
+        const fetched = await getMessages(id!);
+        let mapped = fetched.map((msg) => ({
+          id: msg.id, // Now backend sends 'id'
+          text: msg.text,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          timestamp: msg.timestamp,
+          isAI: msg.isAI,
+        }));
+
+        // Filter out messages sent before the user's clear time
+        const clearKey = `${user?.id}_group_${id}_clearedAt`;
+        const clearedAt = await AsyncStorage.getItem(clearKey);
+        if (clearedAt) {
+          mapped = mapped.filter(
+            (msg) => new Date(msg.timestamp).getTime() > Number(clearedAt)
+          );
+        }
+
+        setMessages(mapped);
         setPinnedMessage(null);
         setReplyTo(null);
       }
@@ -180,10 +198,7 @@ export default function GroupChatScreen() {
         `@lastMessage_${id}`,
         JSON.stringify({ lastMessage: serverMessage })
       );
-      // Only trigger AI if @AI is mentioned
-      if (text.toLowerCase().includes('@ai')) {
-        setTimeout(() => handleAIResponse(text), 1000);
-      }
+      setTimeout(() => handleAIResponse(text), 1000);
     } catch {
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       setConfirmationModal({
@@ -197,24 +212,26 @@ export default function GroupChatScreen() {
   };
 
   const handleAIResponse = async (userMessage: string) => {
-    setAiTyping(true);
-    try {
-      const aiResponse = await generateAIResponse(userMessage, messages, id);
-      if (aiResponse) {
-        const aiMessage: Message = {
-          id: Date.now().toString(),
-          text: aiResponse,
-          senderId: 'ai-assistant',
-          senderName: 'AI Assistant',
-          timestamp: new Date().toISOString(),
-          isAI: true,
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }
-    } finally {
-      setAiTyping(false);
-    }
-  };
+  setAiTyping(true);
+  try {
+    const responseText = await sendAIMessage(userMessage, id!); // just returns text
+    const aiMessage: Message = {
+      id: Date.now().toString(), // or generate a UUID
+      text: responseText,
+      senderId: 'ai-assistant',
+      senderName: 'AI Assistant',
+      timestamp: new Date().toISOString(),
+      isAI: true,
+    };
+    setMessages((prev) => [...prev, aiMessage]);
+  } catch (err) {
+    console.error('Failed to fetch AI response:', err);
+  } finally {
+    setAiTyping(false);
+  }
+};
+
+
 
   const scrollToBottom = () =>
     flatListRef.current?.scrollToEnd({ animated: true });
@@ -240,7 +257,15 @@ export default function GroupChatScreen() {
         setMessages([]);
         setPinnedMessage(null);
         setReplyTo(null);
+
+        // Store the clear timestamp for this user and group
+        const clearKey = `${user?.id}_group_${id}_clearedAt`;
+        await AsyncStorage.setItem(clearKey, Date.now().toString());
+
+        // Remove local message storage as before
+        await AsyncStorage.removeItem(storageKey);
         await AsyncStorage.removeItem(`@lastMessage_${id}`);
+
         setConfirmationModal({ ...confirmationModal, visible: false });
       },
     });

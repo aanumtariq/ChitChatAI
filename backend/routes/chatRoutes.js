@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMessages, sendMessage } = require('../controllers/chatController');
+const { getMessages, sendMessage, sendAIMessage } = require('../controllers/chatController');
 const authenticateUser = require('../middleware/firebaseAuth');
 
 /**
@@ -47,5 +47,40 @@ router.get('/messages', authenticateUser, getMessages);
  *         description: Server error
  */
 router.post('/messages', authenticateUser, sendMessage);
+
+/**
+ * @swagger
+ * /chat/ai-message:
+ *   post:
+ *     summary: Get AI-generated response from Gemini
+ *     description: Sends a list of user messages to Gemini AI and receives a response.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               groupId:
+ *                 type: string
+ *               messages:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     sender:
+ *                       type: string
+ *                       enum: [user, ai]
+ *                     text:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Gemini AI response generated
+ *       400:
+ *         description: Invalid message format
+ *       500:
+ *         description: Server error
+ */
+router.post('/ai-message', sendAIMessage);
 
 module.exports = router;

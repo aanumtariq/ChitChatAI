@@ -79,20 +79,6 @@ export async function getGroup(groupId: string): Promise<Group> {
 // ====================
 // 💬 Get messages for a group
 // ====================
-// Utility to map backend message to frontend Message type
-function mapBackendMessage(msg: any): Message {
-  return {
-    id: msg._id || msg.id || (msg.createdAt ? String(new Date(msg.createdAt).getTime()) : Math.random().toString()),
-    text: msg.content || msg.text || '',
-    senderId: msg.user?._id || msg.user || msg.senderId || '',
-    senderName: msg.user?.name || msg.senderName || 'Unknown',
-    timestamp: msg.createdAt ? new Date(msg.createdAt).toISOString() : (msg.timestamp || new Date().toISOString()),
-    isAI: msg.isAI || (msg.user?.email === 'ai@chitchat.com'),
-    replyTo: msg.replyTo,
-    isForwarded: msg.isForwarded,
-  };
-}
-
 export async function getMessages(groupId: string): Promise<Message[]> {
   const token = await getAuthToken();
   const res = await fetch(`${API_BASE_URL}/chat/messages?groupId=${groupId}`, {
@@ -103,8 +89,7 @@ export async function getMessages(groupId: string): Promise<Message[]> {
     console.log('API error:', res.status, errorText);
     throw new Error('Failed to fetch messages');
   }
-  const data = await res.json();
-  return Array.isArray(data) ? data.map(mapBackendMessage) : [];
+  return res.json();
 }
 
 // ====================
@@ -112,21 +97,23 @@ export async function getMessages(groupId: string): Promise<Message[]> {
 // ====================
 export async function sendMessage(groupId: string, text: string, replyTo?: { senderName: string, text: string }): Promise<Message> {
   const token = await getAuthToken();
+  const user = await SecureStore.getItemAsync('user');
+  const userData:User = JSON.parse(user || '{}');
+  console.log("User Data :",userData);
   const res = await fetch(`${API_BASE_URL}/chat/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ groupId, content: text, replyTo }),
+    body: JSON.stringify({ groupId, content: text, replyTo,userId:userData.id}),
   });
   if (!res.ok) {
     const errorText = await res.text();
     console.log('API error:', res.status, errorText);
     throw new Error('Failed to send message');
   }
-  const data = await res.json();
-  return mapBackendMessage(data);
+  return res.json();
 }
 
 // ====================
@@ -149,6 +136,28 @@ export async function updateProfile(data: Partial<User>): Promise<User> {
   }
   return res.json();
 }
+
+// ====================
+// 👥 Send AI message
+// ====================
+
+export const sendAIMessage = async (userMessage: string, groupId: string) => {
+  const response = await fetch(`${API_BASE_URL}/chat/ai-message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userMessage, groupId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get AI response');
+  }
+
+  const data = await response.json();
+  return data; // { id, text, timestamp }
+};
+
 
 // ====================
 // 👥 Get all users
