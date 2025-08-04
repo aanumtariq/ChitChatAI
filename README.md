@@ -123,9 +123,9 @@ cd ChitChatAI
   <li>Socket.IO</li>
 </ul>
 
-<hr>
+<!-- <hr>
 
-<!-- <h2 id="contributing">🤝 Contributing</h2>
+ <h2 id="contributing">🤝 Contributing</h2>
 <p>We welcome contributions! Fork the repo, make your changes, and submit a PR.  
 Please follow the existing coding style and ensure documentation is updated.</p>
 
