@@ -5,7 +5,6 @@
 <p><em>Real‑time Group‑Based AI Chatbot Mobile Application with Context-Aware Conversations</em></p>
 <!-- <p><strong>Built with React Native + Expo + Node.js + MongoDB + Firebase</strong></p> -->
 
-<hr>
 
 <!-- Project Badges -->
 <p>
@@ -16,21 +15,29 @@
   <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version">
 </p>
 
-<hr>
+<p><em>Built with the tools and technologies:</em></p>
 
-<h3>🛠 Built with</h3>
-<p>
-  <img src="https://img.shields.io/badge/React%20Native-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black" alt="React Native">
-  <img src="https://img.shields.io/badge/Expo-000020.svg?style=for-the-badge&logo=expo&logoColor=white" alt="Expo">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4.svg?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/Lucide%20Icons-000000.svg?style=for-the-badge" alt="Lucide Icons">
-<!--   <img src="https://img.shields.io/badge/SecureStore-FFA500.svg?style=for-the-badge" alt="SecureStore"> -->
-  <img src="https://img.shields.io/badge/Node.js-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
-  <img src="https://img.shields.io/badge/MongoDB-47A248.svg?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB">
-  <img src="https://img.shields.io/badge/Firebase-FFCA28.svg?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
-  <img src="https://img.shields.io/badge/Socket.IO-010101.svg?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.IO">
-</p>
+<!-- Frontend -->
+<img alt="React Native" src="https://img.shields.io/badge/React%20Native-61DAFB.svg?style=flat&logo=react&logoColor=black" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="Expo" src="https://img.shields.io/badge/Expo-000020.svg?style=flat&logo=expo&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=flat&logo=typescript&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="NativeWind" src="https://img.shields.io/badge/NativeWind-38B2AC.svg?style=flat" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="Lucide Icons" src="https://img.shields.io/badge/Lucide_Icons-000000.svg?style=flat" class="inline-block mx-1" style="margin: 0px 2px;">
+<br>
+
+<!-- Backend -->
+<img alt="Node.js" src="https://img.shields.io/badge/Node.js-339933.svg?style=flat&logo=node.js&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-47A248.svg?style=flat&logo=mongodb&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="Firebase" src="https://img.shields.io/badge/Firebase-FFCA28.svg?style=flat&logo=firebase&logoColor=black" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="Socket.IO" src="https://img.shields.io/badge/Socket.IO-010101.svg?style=flat&logo=socketdotio&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+<br>
+
+<!-- Utilities -->
+<img alt="SecureStore" src="https://img.shields.io/badge/SecureStore-FFA500.svg?style=flat" class="inline-block mx-1" style="margin: 0px 2px;">
+<img alt="npm" src="https://img.shields.io/badge/npm-CB3837.svg?style=flat&logo=npm&logoColor=white" class="inline-block mx-1" style="margin: 0px 2px;">
+
+
 
 </div>
 
