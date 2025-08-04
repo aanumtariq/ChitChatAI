@@ -41,7 +41,7 @@ app.use(express.json());
 // 📦 API ROUTES
 // ====================
 app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes); // ✅ Includes /chat/ai-message
+app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/groups', groupRoutes);
@@ -95,6 +95,29 @@ io.on('connection', (socket) => {
 // ====================
 app.get('/api/test', (req, res) => {
   res.json({ message: '✅ Backend is working!' });
+});
+
+// ====================
+// 🤖 Test AI Route
+// ====================
+app.get('/api/test-ai', async (req, res) => {
+  try {
+    const { chatWithGroq } = require('./aiService');
+    const testResponse = await chatWithGroq([
+      { role: 'user', content: 'Hello, can you respond to this test message?' }
+    ]);
+    res.json({ 
+      message: '✅ AI Test', 
+      response: testResponse,
+      apiKeySet: !!process.env.GROQ_API_KEY 
+    });
+  } catch (error) {
+    res.json({ 
+      message: '❌ AI Test Failed', 
+      error: error.message,
+      apiKeySet: !!process.env.GROQ_API_KEY 
+    });
+  }
 });
 
 // ====================

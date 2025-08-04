@@ -1,13 +1,27 @@
 import { Message } from '@/types';
 
-// Replace with your machine’s IP address if using mobile device
-const API_URL = 'http://192.168.100.6:5000/api/chat/ai-message';
+// Replace with your machine's IP address if using mobile device
+const API_URL = 'http://192.168.100.62:5000/api/chat/ai-message';
 
 export async function generateAIResponse(
   userMessage: string,
   context: Message[]
 ): Promise<string> {
   try {
+    // Format messages to match backend expectations
+    const formattedMessages = context.map(msg => ({
+      sender: msg.senderId === 'ai-assistant' ? 'ai' : 'user',
+      text: msg.text,
+      content: msg.text
+    }));
+    
+    // Add current user message
+    formattedMessages.push({
+      sender: 'user',
+      text: userMessage,
+      content: userMessage
+    });
+
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -15,18 +29,18 @@ export async function generateAIResponse(
       },
       body: JSON.stringify({
         groupId: 'ai-group',
-        messages: context.concat({ sender: 'user', text: userMessage }),
+        messages: formattedMessages,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text(); // <-- log server message
+      const errorText = await response.text();
       console.error('Server returned error:', response.status, errorText);
       throw new Error(`Server returned ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('AI Response from server:', data); // <-- see what server sends
+    console.log('AI Response from server:', data);
 
     return data.response || '⚠️ No response from AI';
   } catch (error) {

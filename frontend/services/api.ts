@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.100.6:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://192.168.100.62:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
@@ -114,6 +114,28 @@ export async function sendMessage(groupId: string, text: string, replyTo?: { sen
     throw new Error('Failed to send message');
   }
   return res.json();
+}
+
+// ====================
+// 🤖 Send message to AI
+// ====================
+export async function sendAIMessage(groupId: string, messages: any[]): Promise<string> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/chat/ai-message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ groupId, messages }),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to get AI response');
+  }
+  const data = await res.json();
+  return data.response;
 }
 
 // ====================

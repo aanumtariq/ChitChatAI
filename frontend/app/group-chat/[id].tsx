@@ -21,13 +21,18 @@ import ChatBubble from '@/components/ChatBubble';
 import ChatInput from '@/components/ChatInput';
 import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
-import { getMessages, sendMessage, getGroups, getGroup } from '@/services/api';
-import { sendAIMessage } from '@/services/api';
+import {
+  getMessages,
+  sendMessage,
+  getGroups,
+  getGroup,
+  sendAIMessage,
+} from '@/services/api';
 import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://192.168.61.187:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://192.168.100.62:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,
@@ -265,7 +270,10 @@ export default function GroupChatScreen() {
         `@lastMessage_${id}`,
         JSON.stringify({ lastMessage })
       );
-      setTimeout(() => handleAIResponse(text), 1000);
+      // Only trigger AI response if message contains @AI
+      if (text.toLowerCase().includes('@ai')) {
+        setTimeout(() => handleAIResponse(text), 1000);
+      }
     } catch (error) {
       console.log('❌ Error sending message:', error);
       // Don't remove the temp message on error - let it stay
@@ -283,24 +291,49 @@ export default function GroupChatScreen() {
   };
 
   const handleAIResponse = async (userMessage: string) => {
-  setAiTyping(true);
-  try {
-    const responseText = await sendAIMessage(userMessage, id!); // just returns text
-    const aiMessage: Message = {
-      id: Date.now().toString(), // or generate a UUID
-      text: responseText,
-      senderId: 'ai-assistant',
-      senderName: 'AI Assistant',
-      timestamp: new Date().toISOString(),
-      isAI: true,
-    };
-    setMessages((prev) => [...prev, aiMessage]);
-  } catch (err) {
-    console.error('Failed to fetch AI response:', err);
-  } finally {
-    setAiTyping(false);
-  }
-};
+    setAiTyping(true);
+    try {
+      // Format messages for backend AI function
+      const formattedMessages = messages.map((msg) => ({
+        sender: msg.senderId === user?.id ? 'user' : 'ai',
+        text: msg.text,
+        content: msg.text,
+      }));
+
+      // Add the current user message
+      formattedMessages.push({
+        sender: 'user',
+        text: userMessage,
+        content: userMessage,
+      });
+
+      const aiResponse = await sendAIMessage(id!, formattedMessages);
+
+      if (aiResponse) {
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          text: aiResponse,
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: new Date().toISOString(),
+          isAI: true,
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+
+        // Update the last message to include AI response
+        const allMessages = [...messages, aiMessage];
+        const lastMessage = allMessages[allMessages.length - 1];
+        await AsyncStorage.setItem(
+          `@lastMessage_${id}`,
+          JSON.stringify({ lastMessage })
+        );
+      }
+    } catch (err) {
+      console.error('Failed to fetch AI response:', err);
+    } finally {
+      setAiTyping(false);
+    }
+  };
 
   //     // Update the last message to include AI response
   //     const allMessages = [...messages, aiMessage];
