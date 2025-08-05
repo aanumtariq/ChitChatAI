@@ -21,6 +21,22 @@ interface Member {
 }
 
 export default function GroupMembersScreen() {
+  // Leave group handler
+  async function handleLeaveGroup() {
+    if (!id || !user?.id) return;
+    try {
+      // Call backend API to remove user from group
+      await fetch(`/api/group/${id}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      // Optionally: show a toast or alert
+      router.replace('/'); // Go back to home or group list
+    } catch (err) {
+      // Optionally: show error
+    }
+  }
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -118,6 +134,18 @@ export default function GroupMembersScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Leave Group Button (only for real users, not AI) */}
+      {user?.id !== 'ai-assistant' && (
+        <TouchableOpacity
+          style={[styles.leaveButton, { backgroundColor: colors.primary }]}
+          onPress={handleLeaveGroup}
+        >
+          <Text style={[styles.leaveButtonText, { color: colors.background }]}>
+            Leave Group
+          </Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -190,5 +218,18 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     fontSize: 12,
     fontWeight: '600',
+  },
+  leaveButton: {
+    margin: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Use same shadow/elevation as other buttons if any
+  },
+  leaveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });

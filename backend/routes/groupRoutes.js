@@ -1,6 +1,11 @@
+// Leave group endpoint
+
 const express = require('express');
 const router = express.Router();
 const groupController = require('../controllers/groupController');
+
+// Leave group endpoint
+router.post('/:id/leave', groupController.leaveGroup);
 
 /**
  * @swagger
