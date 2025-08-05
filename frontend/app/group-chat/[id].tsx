@@ -295,7 +295,7 @@ export default function GroupChatScreen() {
     try {
       // Format messages for backend AI function
       const formattedMessages = messages.map((msg) => ({
-        sender: msg.senderId === user?.id ? 'user' : 'ai',
+        sender: msg.senderId === 'ai-assistant' ? 'ai' : 'user',
         text: msg.text,
         content: msg.text,
       }));
@@ -309,24 +309,14 @@ export default function GroupChatScreen() {
 
       const aiResponse = await sendAIMessage(id!, formattedMessages);
 
-      if (aiResponse) {
-        const aiMessage: Message = {
-          id: Date.now().toString(),
-          text: aiResponse,
-          senderId: 'ai-assistant',
-          senderName: 'AI Assistant',
-          timestamp: new Date().toISOString(),
-          isAI: true,
-        };
-        setMessages((prev) => [...prev, aiMessage]);
+      // AI response is saved to database, reload messages to show it
+      if (aiResponse && aiResponse !== '*no response*') {
+        console.log('🤖 AI Response received:', aiResponse);
 
-        // Update the last message to include AI response
-        const allMessages = [...messages, aiMessage];
-        const lastMessage = allMessages[allMessages.length - 1];
-        await AsyncStorage.setItem(
-          `@lastMessage_${id}`,
-          JSON.stringify({ lastMessage })
-        );
+        // Reload messages from database to show AI response
+        setTimeout(() => {
+          loadMessagesFromStorage();
+        }, 1000); // Give database time to save
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
@@ -334,18 +324,6 @@ export default function GroupChatScreen() {
       setAiTyping(false);
     }
   };
-
-  //     // Update the last message to include AI response
-  //     const allMessages = [...messages, aiMessage];
-  //     const lastMessage = allMessages[allMessages.length - 1];
-  //     await AsyncStorage.setItem(
-  //       `@lastMessage_${id}`,
-  //       JSON.stringify({ lastMessage })
-  //     );
-  //   } finally {
-  //     setAiTyping(false);
-  //   }
-  // ;
 
   const scrollToBottom = () =>
     flatListRef.current?.scrollToEnd({ animated: true });

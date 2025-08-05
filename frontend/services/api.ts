@@ -121,13 +121,16 @@ export async function sendMessage(groupId: string, text: string, replyTo?: { sen
 // ====================
 export async function sendAIMessage(groupId: string, messages: any[]): Promise<string> {
   const token = await getAuthToken();
+  const user = await SecureStore.getItemAsync('user');
+  const userData: User = JSON.parse(user || '{}');
+  
   const res = await fetch(`${API_BASE_URL}/chat/ai-message`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ groupId, messages }),
+    body: JSON.stringify({ groupId, messages, userId: userData.id }),
   });
   if (!res.ok) {
     const errorText = await res.text();

@@ -10,19 +10,56 @@ exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.query;
     const filter = groupId ? { groupId } : {};
+    
+    // Get messages without populate first
     const messages = await ChatMessage
       .find(filter)
-      .sort({ createdAt: 1 })
-      .populate('user', 'name profileImage');
+      .sort({ createdAt: 1 });
 
-    const mapped = messages.map(msg => ({
-      id: msg._id,
-      text: msg.content,
-      senderId: msg.user?._id,
-      senderName: msg.user?.name || 'Unknown',
-      timestamp: msg.createdAt,
-      isAI: false,
-    }));
+    const mapped = messages.map(msg => {
+      // Handle AI messages
+      if (msg.isAI) {
+        return {
+          id: msg._id,
+          text: msg.content,
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: msg.createdAt,
+          isAI: true,
+        };
+      }
+      
+      // Handle user messages - populate user data only for user messages
+      return {
+        id: msg._id,
+        text: msg.content,
+        senderId: msg.user,
+        senderName: 'Unknown', // Will be updated below
+        timestamp: msg.createdAt,
+        isAI: false,
+      };
+    });
+
+    // Get user data for user messages only
+    const userMessageIds = messages
+      .filter(msg => !msg.isAI)
+      .map(msg => msg.user)
+      .filter(userId => userId && typeof userId === 'object'); // Only ObjectIds
+
+    if (userMessageIds.length > 0) {
+      const users = await User.find({ _id: { $in: userMessageIds } });
+      const userMap = new Map(users.map(user => [user._id.toString(), user]));
+
+      // Update sender names for user messages
+      mapped.forEach((msg, index) => {
+        if (!msg.isAI && messages[index].user) {
+          const user = userMap.get(messages[index].user.toString());
+          if (user) {
+            msg.senderName = user.name;
+          }
+        }
+      });
+    }
 
     res.status(200).json(mapped);
   } catch (error) {
@@ -96,7 +133,7 @@ exports.markMessageSeen = async (req, res) => {
 
 exports.sendAIMessage = async (req, res) => {
   try {
-    const { groupId, messages } = req.body;
+    const { groupId, messages, userId } = req.body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "Invalid messages" });
@@ -109,25 +146,42 @@ exports.sendAIMessage = async (req, res) => {
       return res.status(200).json({ response: "" });
     }
 
-
     // Prepare messages for AI
     const formattedMessages = [
-  {
-    role: "system",
-    content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
-  },
-  ...messages.map((msg) => ({
-    role: msg.sender === "user" ? "user" : "assistant",
-    content: msg.text?.trim() || msg.content?.trim() || "[empty]",
-  }))
-];
-
+      {
+        role: "system",
+        content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
+      },
+      ...messages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text?.trim() || msg.content?.trim() || "[empty]",
+      }))
+    ];
 
     console.log("📦 Raw messages:", messages);
     console.log("📦 Formatted messages:", formattedMessages);
 
     const aiResponse = await chatWithGroq(formattedMessages);
     console.log("✅ AI Response:", aiResponse);
+
+    // Save AI response to database for persistence
+    if (aiResponse && aiResponse !== "*no response*") {
+      try {
+        const aiMessage = new ChatMessage({
+          user: 'ai-assistant', // String ID for AI
+          content: aiResponse,
+          groupId: groupId,
+          createdAt: new Date(),
+          isAI: true,
+        });
+        
+        await aiMessage.save();
+        console.log("💾 AI response saved to database");
+      } catch (dbError) {
+        console.error("❌ Failed to save AI response to database:", dbError);
+        // Continue without saving - frontend will handle it locally
+      }
+    }
 
     res.json({ response: aiResponse });
   } catch (error) {
