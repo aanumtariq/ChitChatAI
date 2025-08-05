@@ -131,64 +131,64 @@ exports.markMessageSeen = async (req, res) => {
 // @route   POST /api/chat/ai-message
 // @access  Private
 
-exports.sendAIMessage = async (req, res) => {
-  try {
-    const { groupId, messages, userId } = req.body;
+// exports.sendAIMessage = async (req, res) => {
+//   try {
+//     const { groupId, messages, userId } = req.body;
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "Invalid messages" });
-    }
+//     if (!Array.isArray(messages) || messages.length === 0) {
+//       return res.status(400).json({ error: "Invalid messages" });
+//     }
 
-    const lastMessage = messages[messages.length - 1]?.text || "";
-    const hasMention = /@ai/i.test(lastMessage);
+//     const lastMessage = messages[messages.length - 1]?.text || "";
+//     const hasMention = /@ai/i.test(lastMessage);
 
-    if (!hasMention) {
-      return res.status(200).json({ response: "" });
-    }
+//     if (!hasMention) {
+//       return res.status(200).json({ response: "" });
+//     }
 
-    // Prepare messages for AI
-    const formattedMessages = [
-      {
-        role: "system",
-        content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
-      },
-      ...messages.map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text?.trim() || msg.content?.trim() || "[empty]",
-      }))
-    ];
+//     // Prepare messages for AI
+//     const formattedMessages = [
+//       {
+//         role: "system",
+//         content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
+//       },
+//       ...messages.map((msg) => ({
+//         role: msg.sender === "user" ? "user" : "assistant",
+//         content: msg.text?.trim() || msg.content?.trim() || "[empty]",
+//       }))
+//     ];
 
-    console.log("📦 Raw messages:", messages);
-    console.log("📦 Formatted messages:", formattedMessages);
+//     console.log("📦 Raw messages:", messages);
+//     console.log("📦 Formatted messages:", formattedMessages);
 
-    const aiResponse = await chatWithGroq(formattedMessages);
-    console.log("✅ AI Response:", aiResponse);
+//     const aiResponse = await chatWithGroq(formattedMessages);
+//     console.log("✅ AI Response:", aiResponse);
 
-    // Save AI response to database for persistence
-    if (aiResponse && aiResponse !== "*no response*") {
-      try {
-        const aiMessage = new ChatMessage({
-          user: 'ai-assistant', // String ID for AI
-          content: aiResponse,
-          groupId: groupId,
-          createdAt: new Date(),
-          isAI: true,
-        });
+//     // Save AI response to database for persistence
+//     if (aiResponse && aiResponse !== "*no response*") {
+//       try {
+//         const aiMessage = new ChatMessage({
+//           user: 'ai-assistant', // String ID for AI
+//           content: aiResponse,
+//           groupId: groupId,
+//           createdAt: new Date(),
+//           isAI: true,
+//         });
         
-        await aiMessage.save();
-        console.log("💾 AI response saved to database");
-      } catch (dbError) {
-        console.error("❌ Failed to save AI response to database:", dbError);
-        // Continue without saving - frontend will handle it locally
-      }
-    }
+//         await aiMessage.save();
+//         console.log("💾 AI response saved to database");
+//       } catch (dbError) {
+//         console.error("❌ Failed to save AI response to database:", dbError);
+//         // Continue without saving - frontend will handle it locally
+//       }
+//     }
 
-    res.json({ response: aiResponse });
-  } catch (error) {
-    console.error("❌ AI error full:", error);
-    res.status(500).json({ error: "Failed to get AI response" });
-  }
-};
+//     res.json({ response: aiResponse });
+//   } catch (error) {
+//     console.error("❌ AI error full:", error);
+//     res.status(500).json({ error: "Failed to get AI response" });
+//   }
+// };
 
 // @desc    Generate chat summary
 // @route   POST /api/chat/summary
@@ -255,6 +255,15 @@ exports.generateSummary = async (req, res) => {
 
     console.log("📊 Generating summary for", messages.length, "messages");
     const summary = await chatWithGroq(summaryPrompt);
+
+    const aiMessage = new ChatMessage({
+          user: 'ai-assistant',
+          content: summary,
+          groupId: groupId,
+          createdAt: new Date(),
+          isAI: true,
+        });
+        await aiMessage.save();
     
     res.json({ 
       summary: summary,
@@ -265,5 +274,217 @@ exports.generateSummary = async (req, res) => {
   } catch (error) {
     console.error("❌ Summary generation error:", error);
     res.status(500).json({ error: "Failed to generate summary" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+// ...existing code...
+
+exports.sendAIMessage = async (req, res) => {
+  try {
+    const { groupId, messages, userId } = req.body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "Invalid messages" });
+    }
+
+    const lastMessage = messages[messages.length - 1]?.text || "";
+    const hasMention = /@ai/i.test(lastMessage);
+
+    if (!hasMention) {
+      return res.status(200).json({ response: "" });
+    }
+
+    // --- Handle @AI summary ---
+    const summaryMatch = lastMessage.match(/@ai\s+summary\s*(\d+)?/i);
+    if (summaryMatch) {
+      const days = summaryMatch[1];
+
+      if (!days) {
+        console.log("🔍 No days specified for summary, sending instruction message");
+        // No days specified, send instructional message and store as AI message
+        const instruction = `To generate a summary, please specify the number of days.\n\nFor example:\n@AI summary 3\n\nThis will generate a summary of the last 3 days of messages.`;
+        const aiMessage = new ChatMessage({
+          user: 'ai-assistant',
+          content: instruction,
+          groupId: groupId,
+          createdAt: new Date(),
+          isAI: true,
+        });
+        await aiMessage.save();
+
+        // Emit to group
+        const io = getIO();
+        io.to(groupId).emit('newMessage', {
+          id: aiMessage._id,
+          text: aiMessage.content,
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: aiMessage.createdAt,
+          isAI: true,
+          groupId,
+        });
+
+        return res.status(200).json({ response: instruction });
+      }
+
+      // Generate summary for specified days
+      // Fetch messages from DB for the given group and days
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - parseInt(days, 10));
+      const filter = { groupId, createdAt: { $gte: cutoffDate } };
+      const chatMessages = await ChatMessage.find(filter).sort({ createdAt: 1 });
+
+      if (chatMessages.length === 0) {
+        const noMsg = `No messages found in the last ${days} day(s) to summarize.`;
+        const aiMessage = new ChatMessage({
+          user: 'ai-assistant',
+          content: noMsg,
+          groupId: groupId,
+          createdAt: new Date(),
+          isAI: true,
+        });
+        await aiMessage.save();
+
+        // Emit to group
+        const io = getIO();
+        io.to(groupId).emit('newMessage', {
+          id: aiMessage._id,
+          text: aiMessage.content,
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: aiMessage.createdAt,
+          isAI: true,
+          groupId,
+        });
+
+        return res.status(200).json({ response: noMsg });
+      }
+
+      // Format messages for AI
+      const formattedMessages = chatMessages.map(msg => ({
+        role: msg.isAI ? 'assistant' : 'user',
+        content: `${msg.isAI ? 'AI Assistant' : 'User'}: ${msg.content}`
+      }));
+
+      const summaryPrompt = [
+        {
+          role: 'system',
+          content: `You are a helpful assistant that generates concise summaries of chat conversations. 
+          Create a well-structured summary that includes:
+          - Key topics discussed
+          - Important decisions made
+          - Action items mentioned
+          - Overall conversation tone
+          Keep the summary clear and organized.`
+        },
+        {
+          role: 'user',
+          content: `Please provide a summary of the following chat conversation:\n\n${formattedMessages.map(msg => msg.content).join('\n')}`
+        }
+      ];
+
+      const summary = await chatWithGroq(summaryPrompt);
+      console.log("📊 Generated summary:", summary);
+      // Store summary as AI message (persist in DB and emit to group) -- use same logic as normal AI response
+      if (typeof summary === 'string' && summary.trim() !== "") {
+        try {
+          const aiMessage = new ChatMessage({
+            user: 'ai-assistant',
+            content: summary,
+            groupId: groupId,
+            createdAt: new Date(),
+            isAI: true,
+          });
+          await aiMessage.save();
+
+          // Emit to group
+          const io = getIO();
+          io.to(groupId).emit('newMessage', {
+            id: aiMessage._id,
+            text: aiMessage.content,
+            senderId: 'ai-assistant',
+            senderName: 'AI Assistant',
+            timestamp: aiMessage.createdAt,
+            isAI: true,
+            groupId,
+          });
+
+          // Log for debug
+          console.log("💾 AI response saved to database");
+        } catch (err) {
+          console.error('❌ Failed to save AI summary message:', err);
+        }
+        return res.status(200).json({ response: summary });
+      } else {
+        // If summary is empty, return a message but do not store
+        console.error('❌ AI summary is empty or not a string:', summary);
+        return res.status(200).json({ response: "No summary could be generated." });
+      }
+    }
+    // --- End @AI summary handling ---
+
+    // Prepare messages for AI (normal @AI mention)
+    const formattedMessages = [
+      {
+        role: "system",
+        content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
+      },
+      ...messages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text?.trim() || msg.content?.trim() || "[empty]",
+      }))
+    ];
+
+    console.log("📦 Raw messages:", messages);
+    console.log("📦 Formatted messages:", formattedMessages);
+
+    const aiResponse = await chatWithGroq(formattedMessages);
+    // console.log("✅ AI Response:", aiResponse);
+
+    // Save AI response to database for persistence
+    if (aiResponse && aiResponse !== "*no response*") {
+      try {
+        const aiMessage = new ChatMessage({
+          user: 'ai-assistant', // String ID for AI
+          content: aiResponse,
+          groupId: groupId,
+          createdAt: new Date(),
+          isAI: true,
+        });
+
+        await aiMessage.save();
+
+        // Emit to group
+        const io = getIO();
+        io.to(groupId).emit('newMessage', {
+          id: aiMessage._id,
+          text: aiMessage.content,
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: aiMessage.createdAt,
+          isAI: true,
+          groupId,
+        });
+
+        console.log("💾 AI response saved to database");
+      } catch (dbError) {
+        console.error("❌ Failed to save AI response to database:", dbError);
+        // Continue without saving - frontend will handle it locally
+      }
+    }
+
+    res.json({ response: aiResponse });
+  } catch (error) {
+    console.error("❌ AI error full:", error);
+    res.status(500).json({ error: "Failed to get AI response" });
   }
 };
