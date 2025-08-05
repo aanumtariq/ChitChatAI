@@ -142,6 +142,27 @@ export async function sendAIMessage(groupId: string, messages: any[]): Promise<s
 }
 
 // ====================
+// 📊 Generate chat summary
+// ====================
+export async function generateSummary(groupId: string, days?: number, messageCount?: number): Promise<any> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/chat/summary`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ groupId, days, messageCount }),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to generate summary');
+  }
+  return res.json();
+}
+
+// ====================
 // ✏️ Update user profile
 // ====================
 export async function updateProfile(data: Partial<User>): Promise<User> {

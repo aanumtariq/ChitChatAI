@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMessages, sendMessage, sendAIMessage } = require('../controllers/chatController');
+const { getMessages, sendMessage, sendAIMessage, generateSummary } = require('../controllers/chatController');
 const authenticateUser = require('../middleware/firebaseAuth');
 
 /**
@@ -82,5 +82,36 @@ router.post('/messages', authenticateUser, sendMessage);
  *         description: Server error
  */
 router.post('/ai-message', sendAIMessage);
+
+/**
+ * @swagger
+ * /chat/summary:
+ *   post:
+ *     summary: Generate chat summary
+ *     description: Generates a summary of chat messages based on time or message count.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               groupId:
+ *                 type: string
+ *               days:
+ *                 type: number
+ *                 description: Number of days to look back (optional)
+ *               messageCount:
+ *                 type: number
+ *                 description: Number of recent messages to summarize (optional)
+ *     responses:
+ *       200:
+ *         description: Summary generated successfully
+ *       400:
+ *         description: Invalid parameters
+ *       500:
+ *         description: Server error
+ */
+router.post('/summary', authenticateUser, generateSummary);
 
 module.exports = router;

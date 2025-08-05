@@ -189,3 +189,81 @@ exports.sendAIMessage = async (req, res) => {
     res.status(500).json({ error: "Failed to get AI response" });
   }
 };
+
+// @desc    Generate chat summary
+// @route   POST /api/chat/summary
+// @access  Private
+exports.generateSummary = async (req, res) => {
+  try {
+    const { groupId, days, messageCount } = req.body;
+    
+    if (!groupId) {
+      return res.status(400).json({ error: "GroupId is required" });
+    }
+
+    let filter = { groupId };
+    let limit = null;
+
+    // Handle time-based summary (days)
+    if (days && days > 0) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      filter.createdAt = { $gte: cutoffDate };
+    }
+    // Handle message-count-based summary
+    else if (messageCount && messageCount > 0) {
+      limit = messageCount;
+    }
+
+    // Fetch messages from database
+    let query = ChatMessage.find(filter).sort({ createdAt: -1 });
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const messages = await query.exec();
+
+    if (messages.length === 0) {
+      return res.status(200).json({ 
+        summary: "No messages found for the specified criteria." 
+      });
+    }
+
+    // Format messages for AI
+    const formattedMessages = messages.map(msg => ({
+      role: msg.isAI ? 'assistant' : 'user',
+      content: `${msg.isAI ? 'AI Assistant' : 'User'}: ${msg.content}`
+    }));
+
+    // Create custom prompt for summary
+    const summaryPrompt = [
+      {
+        role: 'system',
+        content: `You are a helpful assistant that generates concise summaries of chat conversations. 
+        Create a well-structured summary that includes:
+        - Key topics discussed
+        - Important decisions made
+        - Action items mentioned
+        - Overall conversation tone
+        Keep the summary clear and organized.`
+      },
+      {
+        role: 'user',
+        content: `Please provide a summary of the following chat conversation:\n\n${formattedMessages.map(msg => msg.content).join('\n')}`
+      }
+    ];
+
+    console.log("📊 Generating summary for", messages.length, "messages");
+    const summary = await chatWithGroq(summaryPrompt);
+    
+    res.json({ 
+      summary: summary,
+      messageCount: messages.length,
+      timeRange: days ? `${days} day(s)` : 'recent messages'
+    });
+
+  } catch (error) {
+    console.error("❌ Summary generation error:", error);
+    res.status(500).json({ error: "Failed to generate summary" });
+  }
+};
