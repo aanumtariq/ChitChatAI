@@ -131,65 +131,6 @@ exports.markMessageSeen = async (req, res) => {
 // @route   POST /api/chat/ai-message
 // @access  Private
 
-// exports.sendAIMessage = async (req, res) => {
-//   try {
-//     const { groupId, messages, userId } = req.body;
-
-//     if (!Array.isArray(messages) || messages.length === 0) {
-//       return res.status(400).json({ error: "Invalid messages" });
-//     }
-
-//     const lastMessage = messages[messages.length - 1]?.text || "";
-//     const hasMention = /@ai/i.test(lastMessage);
-
-//     if (!hasMention) {
-//       return res.status(200).json({ response: "" });
-//     }
-
-//     // Prepare messages for AI
-//     const formattedMessages = [
-//       {
-//         role: "system",
-//         content: "You are ChitChat AI, a helpful assistant that only replies when '@AI' is mentioned in a message.",
-//       },
-//       ...messages.map((msg) => ({
-//         role: msg.sender === "user" ? "user" : "assistant",
-//         content: msg.text?.trim() || msg.content?.trim() || "[empty]",
-//       }))
-//     ];
-
-//     console.log("📦 Raw messages:", messages);
-//     console.log("📦 Formatted messages:", formattedMessages);
-
-//     const aiResponse = await chatWithGroq(formattedMessages);
-//     console.log("✅ AI Response:", aiResponse);
-
-//     // Save AI response to database for persistence
-//     if (aiResponse && aiResponse !== "*no response*") {
-//       try {
-//         const aiMessage = new ChatMessage({
-//           user: 'ai-assistant', // String ID for AI
-//           content: aiResponse,
-//           groupId: groupId,
-//           createdAt: new Date(),
-//           isAI: true,
-//         });
-        
-//         await aiMessage.save();
-//         console.log("💾 AI response saved to database");
-//       } catch (dbError) {
-//         console.error("❌ Failed to save AI response to database:", dbError);
-//         // Continue without saving - frontend will handle it locally
-//       }
-//     }
-
-//     res.json({ response: aiResponse });
-//   } catch (error) {
-//     console.error("❌ AI error full:", error);
-//     res.status(500).json({ error: "Failed to get AI response" });
-//   }
-// };
-
 // @desc    Generate chat summary
 // @route   POST /api/chat/summary
 // @access  Private
