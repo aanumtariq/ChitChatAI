@@ -3,9 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const groupController = require('../controllers/groupController');
+const authenticateUser = require('../middleware/firebaseAuth');
 
 // Leave group endpoint
-router.post('/:id/leave', groupController.leaveGroup);
+router.post('/:id/leave', authenticateUser, groupController.leaveGroup);
 
 /**
  * @swagger

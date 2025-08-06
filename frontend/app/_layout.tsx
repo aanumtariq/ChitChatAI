@@ -25,6 +25,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="group-create" />
             <Stack.Screen name="group-chat/[id]" />
+            <Stack.Screen name="group-members/group-members" />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

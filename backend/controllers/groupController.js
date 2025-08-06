@@ -1,33 +1,47 @@
+const Group = require('../models/Group');
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
 /**
  * Leave group (remove user from group members)
  * @route POST /api/group/:id/leave
  */
 exports.leaveGroup = async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.body;
-  if (!id || !userId) {
-    return res.status(400).json({ message: 'Group ID and user ID are required.' });
+  const userId = req.user._id; // Get user ID from authenticated request
+  
+  if (!id) {
+    return res.status(400).json({ message: 'Group ID is required.' });
   }
+  
   try {
     const group = await Group.findById(id);
     if (!group) {
       return res.status(404).json({ message: 'Group not found.' });
     }
+    
+    // Check if user is a member of the group
+    const isMember = group.members.some(
+      (member) => member.toString() === userId.toString()
+    );
+    
+    if (!isMember) {
+      return res.status(400).json({ message: 'You are not a member of this group.' });
+    }
+    
     // Remove user from members array
     group.members = group.members.filter(
       (member) => member.toString() !== userId.toString()
     );
     await group.save();
+    
     res.status(200).json({ message: 'Left group successfully.' });
   } catch (error) {
     console.error('❌ Failed to leave group:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
-const Group = require('../models/Group');
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 /**
  * Create a new group

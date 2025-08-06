@@ -4,15 +4,18 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react-native';
-import { getGroup } from '@/services/api';
+import { getGroup, leaveGroup } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import useOnlineUsers from '@/hooks/useOnlineUsers';
+import Toast from 'react-native-toast-message';
 
 interface Member {
   id: string;
@@ -21,28 +24,44 @@ interface Member {
 }
 
 export default function GroupMembersScreen() {
-  // Leave group handler
-  async function handleLeaveGroup() {
-    if (!id || !user?.id) return;
-    try {
-      // Call backend API to remove user from group
-      await fetch(`/api/group/${id}/leave`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
-      // Optionally: show a toast or alert
-      router.replace('/'); // Go back to home or group list
-    } catch (err) {
-      // Optionally: show error
-    }
-  }
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { user } = useAuth();
   const { onlineUsers } = useOnlineUsers(user?.id);
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
+  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // Leave group handler
+  async function handleLeaveGroup() {
+    if (!id || !user?.id) return;
+    
+    setLeaving(true);
+    try {
+      await leaveGroup(id);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'You have left the group successfully',
+      });
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Failed to leave group:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to leave group. Please try again.',
+      });
+    } finally {
+      setLeaving(false);
+      setLeaveModalVisible(false);
+    }
+  }
+
+  const showLeaveConfirmation = () => {
+    setLeaveModalVisible(true);
+  };
 
   useEffect(() => {
     async function fetchMembers() {
@@ -139,13 +158,52 @@ export default function GroupMembersScreen() {
       {user?.id !== 'ai-assistant' && (
         <TouchableOpacity
           style={[styles.leaveButton, { backgroundColor: colors.primary }]}
-          onPress={handleLeaveGroup}
+          onPress={showLeaveConfirmation}
         >
           <Text style={[styles.leaveButtonText, { color: colors.background }]}>
             Leave Group
           </Text>
         </TouchableOpacity>
       )}
+
+      <Modal
+        visible={leaveModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLeaveModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setLeaveModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+                         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Confirm Leave Group
+              </Text>
+              <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+                Are you sure you want to leave this group? This action cannot be undone.
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                  onPress={handleLeaveGroup}
+                  disabled={leaving}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.background }]}>
+                    {leaving ? 'Leaving...' : 'Leave Group'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: colors.border }]}
+                  onPress={() => setLeaveModalVisible(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -231,5 +289,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

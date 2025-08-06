@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.100.62:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://192.168.100.30:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
@@ -197,6 +197,27 @@ export async function getAllUsers(): Promise<User[]> {
     throw new Error('Failed to fetch users');
   }
   return res.json();
+}
+
+// ====================
+// 🚪 Leave group
+// ====================
+export async function leaveGroup(groupId: string): Promise<void> {
+  const token = await getAuthToken();
+  
+  const res = await fetch(`${API_BASE_URL}/groups/${groupId}/leave`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to leave group');
+  }
 }
 
 
