@@ -11,6 +11,10 @@ const chatMessageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   isAI: { type: Boolean, default: false },
   deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Users who deleted this message
+  isForwarded: { type: Boolean, default: false }, // Flag for forwarded messages
+  originalMessageId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatMessage' }, // Reference to original message
+  forwardedFrom: { type: String }, // Name of the original sender
+  forwardedFromGroup: { type: String }, // Name of the original group
 });
 
 module.exports = mongoose.model('ChatMessage', chatMessageSchema);

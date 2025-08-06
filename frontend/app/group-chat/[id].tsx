@@ -10,11 +10,12 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ScrollView,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Users, CornerDownLeft } from 'lucide-react-native';
+import { ArrowLeft, Users, CornerDownLeft, Check } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import ChatBubble from '@/components/ChatBubble';
@@ -29,12 +30,13 @@ import {
   sendAIMessage,
   generateSummary,
   deleteMessage as deleteMessageAPI,
+  forwardMessage as forwardMessageAPI,
 } from '@/services/api';
 import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://192.168.0.105:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://192.168.0.103:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,
@@ -437,26 +439,35 @@ export default function GroupChatScreen() {
   };
 
   const confirmForwarding = async () => {
-    if (!selectedForwardMessage) return;
-    for (const groupId of selectedGroups) {
-      const forwardMsg: Message = {
-        ...selectedForwardMessage,
-        id: Date.now().toString() + Math.random(),
-        isForwarded: true,
-        isAI: false,
-        senderId: user!.id,
-        senderName: user!.name,
-        timestamp: new Date().toISOString(),
-      };
-      const key = `${user?.id}_group_${groupId}_messages`;
-      const existing = await AsyncStorage.getItem(key);
-      const parsed = existing ? JSON.parse(existing) : { messages: [] };
-      parsed.messages.push(forwardMsg);
-      await AsyncStorage.setItem(key, JSON.stringify(parsed));
+    if (!selectedForwardMessage || selectedGroups.length === 0) {
+      Alert.alert('Error', 'Please select at least one group to forward to.');
+      return;
     }
-    setForwardModalVisible(false);
-    setSelectedGroups([]);
-    setSelectedForwardMessage(null);
+
+    try {
+      // Show loading state
+      setForwardModalVisible(false);
+      
+      // Forward to each selected group
+      for (const groupId of selectedGroups) {
+        try {
+          await forwardMessageAPI(selectedForwardMessage.id, groupId);
+        } catch (error) {
+          console.error('❌ Error forwarding message to group:', groupId, error);
+          Alert.alert('Error', `Failed to forward message to ${allGroups.find(g => (g._id || g.id) === groupId)?.name || 'group'}`);
+        }
+      }
+
+      // Show success message
+      Alert.alert('Success', `Message forwarded to ${selectedGroups.length} group(s)`);
+      
+      // Reset state
+      setSelectedGroups([]);
+      setSelectedForwardMessage(null);
+    } catch (error) {
+      console.error('❌ Error in confirmForwarding:', error);
+      Alert.alert('Error', 'Failed to forward message. Please try again.');
+    }
   };
 
   if (loading) return <Loader />;
@@ -677,46 +688,95 @@ export default function GroupChatScreen() {
 
         {/* Forward Modal */}
         <Modal visible={forwardModalVisible} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.surface }]}
-            >
-              <Text style={[styles.modalTitle, { color: colors.text }]}>
-                Forward Message
-              </Text>
-              <ScrollView style={{ maxHeight: 200 }}>
-                {allGroups.map((grp) => (
-                  <TouchableOpacity
-                    key={grp._id || grp.id}
-                    onPress={() => toggleGroupSelection(grp._id || grp.id)}
-                    style={{ padding: 8 }}
-                  >
-                    <Text
-                      style={{
-                        color: selectedGroups.includes(grp._id || grp.id)
-                          ? 'green'
-                          : colors.text,
-                      }}
-                    >
-                      {grp.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity onPress={confirmForwarding}>
-                <Text style={[styles.confirmBtn, { color: colors.primary }]}>
-                  Forward
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setForwardModalVisible(false)}>
-                <Text
-                  style={[styles.cancelBtn, { color: colors.textSecondary }]}
+          <TouchableWithoutFeedback onPress={() => setForwardModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View
+                  style={[styles.modalContent, { backgroundColor: colors.surface }]}
                 >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                    Forward Message
+                  </Text>
+                  
+                  {selectedForwardMessage && (
+                    <View style={[styles.forwardPreview, { backgroundColor: colors.inputBackground }]}>
+                      <Text style={[styles.forwardPreviewText, { color: colors.textSecondary }]}>
+                        Forwarding: "{selectedForwardMessage.text.substring(0, 50)}..."
+                      </Text>
+                    </View>
+                  )}
+                  
+                  <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                    Select groups to forward to:
+                  </Text>
+                  
+                  <ScrollView style={styles.groupsList} showsVerticalScrollIndicator={false}>
+                    {allGroups
+                      .filter(grp => (grp._id || grp.id) !== id) // Exclude current group
+                      .map((grp) => (
+                        <TouchableOpacity
+                          key={grp._id || grp.id}
+                          onPress={() => toggleGroupSelection(grp._id || grp.id)}
+                          style={[
+                            styles.groupItem,
+                            {
+                              backgroundColor: selectedGroups.includes(grp._id || grp.id)
+                                ? colors.primary + '20'
+                                : 'transparent',
+                              borderColor: selectedGroups.includes(grp._id || grp.id)
+                                ? colors.primary
+                                : colors.border,
+                            }
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.groupItemText,
+                              {
+                                color: selectedGroups.includes(grp._id || grp.id)
+                                  ? colors.primary
+                                  : colors.text,
+                              }
+                            ]}
+                          >
+                            {grp.name}
+                          </Text>
+                          {selectedGroups.includes(grp._id || grp.id) && (
+                            <Check size={16} color={colors.primary} />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                  </ScrollView>
+                  
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity 
+                      onPress={() => setForwardModalVisible(false)}
+                      style={[styles.modalButton, { backgroundColor: colors.border }]}
+                    >
+                      <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={confirmForwarding}
+                      style={[
+                        styles.modalButton, 
+                        { 
+                          backgroundColor: selectedGroups.length > 0 ? colors.primary : colors.border,
+                          opacity: selectedGroups.length > 0 ? 1 : 0.5
+                        }
+                      ]}
+                      disabled={selectedGroups.length === 0}
+                    >
+                      <Text style={[styles.modalButtonText, { color: selectedGroups.length > 0 ? '#fff' : colors.textSecondary }]}>
+                        Forward ({selectedGroups.length})
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -796,11 +856,59 @@ const styles = StyleSheet.create({
   modalSubtitle: { fontSize: 14, textAlign: 'center' },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    gap: 20,
-    marginTop: 10,
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 20,
   },
-
-  confirmBtn: { fontSize: 16, fontWeight: '600', marginTop: 16 },
-  cancelBtn: { fontSize: 16, fontWeight: '600', marginTop: 8 },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  forwardPreview: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  forwardPreviewText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  groupsList: {
+    maxHeight: 200,
+    marginBottom: 16,
+  },
+  groupItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginVertical: 2,
+    borderWidth: 1,
+  },
+  groupItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  confirmBtn: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    marginTop: 16 
+  },
+  cancelBtn: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    marginTop: 8 
+  },
 });

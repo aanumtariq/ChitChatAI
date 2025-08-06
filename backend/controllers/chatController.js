@@ -47,7 +47,7 @@ exports.getMessages = async (req, res) => {
       }
       
       // Handle user messages - populate user data only for user messages
-      return {
+      const messageData = {
         id: msg._id,
         text: msg.content,
         senderId: msg.user,
@@ -55,6 +55,15 @@ exports.getMessages = async (req, res) => {
         timestamp: msg.createdAt,
         isAI: false,
       };
+
+      // Add forwarded message information if applicable
+      if (msg.isForwarded) {
+        messageData.isForwarded = true;
+        messageData.forwardedFrom = msg.forwardedFrom || 'Unknown';
+        messageData.forwardedFromGroup = msg.forwardedFromGroup || 'Unknown Group';
+      }
+
+      return messageData;
     });
 
     // Get user data for user messages only
@@ -120,6 +129,13 @@ exports.sendMessage = async (req, res) => {
       isAI: false,
       groupId,
     };
+
+    // Add forwarded message information if applicable
+    if (newMsg.isForwarded) {
+      messageData.isForwarded = true;
+      messageData.forwardedFrom = newMsg.forwardedFrom || 'Unknown';
+      messageData.forwardedFromGroup = newMsg.forwardedFromGroup || 'Unknown Group';
+    }
 
     const io = getIO();
     io.to(groupId).emit('newMessage', messageData);
@@ -263,16 +279,87 @@ exports.generateSummary = async (req, res) => {
   }
 };
 
+// @desc    Forward a message to another group
+// @route   POST /api/chat/messages/:id/forward
+// @access  Private
+exports.forwardMessage = async (req, res) => {
+  try {
+    // FIX: Use req.params.id to match the route
+    const originalMessageId = req.params.id;
+    const { targetGroupId, userId } = req.body;
 
+    if (!targetGroupId || !userId) {
+      return res.status(400).json({ message: 'Target group ID and user ID are required' });
+    }
 
+    // Find the original message
+    const originalMessage = await ChatMessage.findById(originalMessageId);
+    if (!originalMessage) {
+      return res.status(404).json({ message: 'Original message not found' });
+    }
 
+    // Get the user who is forwarding
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
+    // Get the original sender's name
+    let originalSenderName = 'Unknown';
+    if (originalMessage.isAI) {
+      originalSenderName = 'AI Assistant';
+    } else if (originalMessage.user) {
+      const originalUser = await User.findById(originalMessage.user);
+      if (originalUser) {
+        originalSenderName = originalUser.name;
+      }
+    }
 
+    // Get the original group name
+    const Group = require('../models/Group');
+    const originalGroup = await Group.findById(originalMessage.groupId);
+    const originalGroupName = originalGroup ? originalGroup.name : 'Unknown Group';
 
+    // Create the forwarded message
+    const forwardedMessage = new ChatMessage({
+      user: userId,
+      content: originalMessage.content,
+      groupId: targetGroupId,
+      createdAt: new Date(),
+      isAI: false,
+      isForwarded: true,
+      originalMessageId: originalMessage._id,
+      forwardedFrom: originalSenderName,
+      forwardedFromGroup: originalGroupName,
+    });
 
+    await forwardedMessage.save();
+    await forwardedMessage.populate('user', 'name profileImage');
 
+    const messageData = {
+      id: forwardedMessage._id,
+      text: forwardedMessage.content,
+      senderId: forwardedMessage.user?._id,
+      senderName: forwardedMessage.user?.name || 'Unknown',
+      timestamp: forwardedMessage.createdAt,
+      isAI: false,
+      isForwarded: true,
+      forwardedFrom: originalSenderName,
+      forwardedFromGroup: originalGroupName,
+      groupId: targetGroupId,
+    };
 
-// ...existing code...
+    // Emit to the target group
+    const io = getIO();
+    io.to(targetGroupId).emit('newMessage', messageData);
+
+    res.status(201).json(messageData);
+  } catch (error) {
+    console.error('❌ Error forwarding message:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 exports.sendAIMessage = async (req, res) => {
   try {

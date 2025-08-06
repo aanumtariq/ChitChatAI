@@ -14,13 +14,13 @@ export interface Message {
   senderName: string;
   timestamp: string;
   isAI: boolean;
-   replyTo?: {
+  replyTo?: {
     senderName: string;
     text: string; 
-    
   };
   isForwarded?: boolean;
-
+  forwardedFrom?: string;
+  forwardedFromGroup?: string;
 }
 
 export interface Group {

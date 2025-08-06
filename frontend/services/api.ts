@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.0.105:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://192.168.0.103:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
@@ -236,6 +236,32 @@ export async function deleteMessage(messageId: string): Promise<void> {
     console.log('API error:', res.status, errorText);
     throw new Error('Failed to delete message');
   }
+}
+
+// ====================
+// 📤 Forward message to another group
+// ====================
+export async function forwardMessage(originalMessageId: string, targetGroupId: string): Promise<Message> {
+  const token = await getAuthToken();
+  const user = await SecureStore.getItemAsync('user');
+  const userData: User = JSON.parse(user || '{}');
+  
+  const res = await fetch(`${API_BASE_URL}/chat/messages/${originalMessageId}/forward`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ targetGroupId, userId: userData.id }),
+  });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to forward message');
+  }
+  
+  return res.json();
 }
 
 

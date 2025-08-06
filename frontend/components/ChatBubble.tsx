@@ -83,9 +83,16 @@ export default function ChatBubble({
       )}
 
       {!message.isAI && !isCurrentUser && (
-
         <Text style={[styles.senderName, { color: colors.textSecondary }]}>{message.senderName}</Text>
+      )}
 
+      {/* Forwarded message indicator */}
+      {message.isForwarded && (
+        <View style={[styles.forwardedIndicator, { borderLeftColor: colors.primary }]}>
+          <Text style={[styles.forwardedText, { color: colors.primary }]}>
+            ↪️ Forwarded from {message.forwardedFrom || 'Unknown'} in {message.forwardedFromGroup || 'Unknown Group'}
+          </Text>
+        </View>
       )}
 
       {message.replyTo && (
@@ -272,5 +279,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
 
+  },
+  forwardedIndicator: {
+    borderLeftWidth: 3,
+    paddingLeft: 8,
+    marginBottom: 6,
+  },
+  forwardedText: {
+    fontSize: 12,
+    fontStyle: 'italic',
   },
 });

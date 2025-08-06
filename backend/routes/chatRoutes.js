@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMessages, sendMessage, sendAIMessage, generateSummary, deleteMessage } = require('../controllers/chatController');
+const { getMessages, sendMessage, sendAIMessage, generateSummary, deleteMessage, forwardMessage } = require('../controllers/chatController');
 const authenticateUser = require('../middleware/firebaseAuth');
 
 /**
@@ -116,9 +116,9 @@ router.post('/summary', authenticateUser, generateSummary);
 
 /**
  * @swagger
- * /chat/messages/{id}/delete:
+ * /chat/messages/{id}/forward:
  *   post:
- *     summary: Delete a specific chat message by ID
+ *     summary: Forward a message to another group
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -127,11 +127,47 @@ router.post('/summary', authenticateUser, generateSummary);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Original message ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               targetGroupId:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Message forwarded successfully
+ *       400:
+ *         description: Invalid parameters
+ *       404:
+ *         description: Message or user not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/messages/:id/forward', authenticateUser, forwardMessage);
+
+/**
+ * @swagger
+ * /chat/messages/{id}/delete:
+ *   post:
+ *     summary: Delete a message (soft delete)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Message ID
  *     responses:
  *       200:
  *         description: Message deleted successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Message not found
  *       500:
