@@ -9,7 +9,8 @@ const chatMessageSchema = new mongoose.Schema({
   content: { type: String, required: true },
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', required: true },
   createdAt: { type: Date, default: Date.now },
-  isAI: { type: Boolean, default: false }
+  isAI: { type: Boolean, default: false },
+  deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Users who deleted this message
 });
 
 module.exports = mongoose.model('ChatMessage', chatMessageSchema);

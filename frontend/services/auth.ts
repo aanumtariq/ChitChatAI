@@ -2,7 +2,7 @@ import axios from 'axios';
 import { User } from '@/types';
 import { AuthResponse } from '@/types';
 // Replace this with your backend base URL
-const API_BASE_URL = 'http://192.168.100.30:5000/api';
+const API_BASE_URL = 'http://192.168.0.105:5000/api';
 
 export async function loginUser(email: string, password: string):  Promise<AuthResponse>{
   try {

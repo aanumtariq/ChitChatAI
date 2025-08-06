@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMessages, sendMessage, sendAIMessage, generateSummary } = require('../controllers/chatController');
+const { getMessages, sendMessage, sendAIMessage, generateSummary, deleteMessage } = require('../controllers/chatController');
 const authenticateUser = require('../middleware/firebaseAuth');
 
 /**
@@ -113,5 +113,30 @@ router.post('/ai-message', sendAIMessage);
  *         description: Server error
  */
 router.post('/summary', authenticateUser, generateSummary);
+
+/**
+ * @swagger
+ * /chat/messages/{id}/delete:
+ *   post:
+ *     summary: Delete a specific chat message by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Message deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/messages/:id/delete', authenticateUser, deleteMessage);
 
 module.exports = router;

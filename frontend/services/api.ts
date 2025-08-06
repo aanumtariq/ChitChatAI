@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.100.30:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://192.168.0.105:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
@@ -217,6 +217,24 @@ export async function leaveGroup(groupId: string): Promise<void> {
     const errorText = await res.text();
     console.log('API error:', res.status, errorText);
     throw new Error('Failed to leave group');
+  }
+}
+
+// ====================
+// 🗑️ Delete message for current user (soft delete)
+// ====================
+export async function deleteMessage(messageId: string): Promise<void> {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}/chat/messages/${messageId}/delete`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.log('API error:', res.status, errorText);
+    throw new Error('Failed to delete message');
   }
 }
 

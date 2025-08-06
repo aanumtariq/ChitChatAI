@@ -33,7 +33,7 @@ export default function ChangePasswordScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync('userToken');
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.30:5000/api'}/users/me/change-password`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api'}/users/me/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

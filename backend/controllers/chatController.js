@@ -3,15 +3,32 @@ const ChatMessage = require('../models/ChatMessage');
 const User = require('../models/User');
 const { getIO } = require('../utils/socket');
 
+const resolveUserId = async (req) => {
+  // Try to get MongoDB _id from req.user (if already populated)
+  if (req.user && req.user._id) return req.user._id;
+  // If Firebase UID is present, look up the user
+  if (req.user && req.user.uid) {
+    const user = await User.findOne({ firebaseUid: req.user.uid });
+    if (user) return user._id;
+  }
+  // Fallback: try userId in body/query
+  if (req.body && req.body.userId) return req.body.userId;
+  if (req.query && req.query.userId) return req.query.userId;
+  return null;
+};
+
 // @desc    Get all chat messages
 // @route   GET /api/chat/messages
 // @access  Private (requires authentication)
 exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.query;
+    const userId = await resolveUserId(req);
     const filter = groupId ? { groupId } : {};
-    
-    // Get messages without populate first
+    // Exclude messages deleted for this user
+    if (userId) {
+      filter.deletedFor = { $ne: userId };
+    }
     const messages = await ChatMessage
       .find(filter)
       .sort({ createdAt: 1 });
@@ -123,6 +140,34 @@ exports.markMessageSeen = async (req, res) => {
     await ChatMessage.findByIdAndUpdate(messageId, { seen: true });
     res.status(200).json({ success: true });
   } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Soft delete a message for the current user
+// @route   POST /api/chat/messages/:id/delete
+// @access  Private
+exports.deleteMessage = async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    const message = await ChatMessage.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    // Only add if not already present
+    if (!message.deletedFor) message.deletedFor = [];
+    // Convert all IDs to string for comparison, but store as ObjectId
+    if (!message.deletedFor.map(id => id.toString()).includes(userId.toString())) {
+      message.deletedFor.push(userId);
+      await message.save();
+    }
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('❌ Error deleting message:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

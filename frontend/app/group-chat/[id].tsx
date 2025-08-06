@@ -28,12 +28,13 @@ import {
   getGroup,
   sendAIMessage,
   generateSummary,
+  deleteMessage as deleteMessageAPI,
 } from '@/services/api';
 import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://192.168.100.30:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://192.168.0.105:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,
@@ -377,9 +378,15 @@ export default function GroupChatScreen() {
       visible: true,
       title: 'Delete Message',
       subtitle: 'Are you sure?',
-      onConfirm: () => {
-        setMessages((prev) => prev.filter((m) => m.id !== msgId));
-        setConfirmationModal({ ...confirmationModal, visible: false });
+      onConfirm: async () => {
+        try {
+          await deleteMessageAPI(msgId);
+          setMessages((prev) => prev.filter((m) => m.id !== msgId));
+        } catch (error) {
+          alert('Failed to delete message. Please try again.');
+        } finally {
+          setConfirmationModal({ ...confirmationModal, visible: false });
+        }
       },
     });
   };
