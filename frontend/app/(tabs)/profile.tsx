@@ -98,9 +98,10 @@ export default function ProfileScreen() {
     router.replace('/welcome');
   };
 
-  const handleShare = () => {
-    alert('Invite Friends\n\nShare Chit Chat AI with your friends!');
-  };
+  // const handleShare = () => {
+
+  //   alert('Invite Friends\n\nShare Chit Chat AI with your friends!');
+  // };
 
   const notificationSettings: SettingItem[] = [
     {
@@ -132,12 +133,12 @@ export default function ProfileScreen() {
       subtitle: 'Update your account password',
       onPress: () => router.push('/(tabs)/change-password' as any)
     },
-    {
-      icon: Share,
-      title: 'Invite Friends',
-      subtitle: 'Share the app with others',
-      onPress: handleShare,
-    },
+    // {
+    //   icon: Share,
+    //   title: 'Invite Friends',
+    //   subtitle: 'Share the app with others',
+    //   onPress: handleShare,
+    // },
     {
       icon: LogOut,
       title: 'Logout',
@@ -238,47 +239,47 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {/* 🔥 Logout Confirmation Modal */}
-      <Modal visible={showLogoutModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>
-                Confirm Logout
-              </Text>
-              <TouchableOpacity onPress={() => setShowLogoutModal(false)}>
-                <X size={22} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-              Are you sure you want to logout? You'll need to sign in again to
-              access your account.
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { borderColor: colors.border }]}
-                onPress={() => setShowLogoutModal(false)}
-              >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: colors.primary },
-                ]}
-                onPress={handleLogoutConfirm}
-              >
-                <Text
-                  style={[styles.modalButtonText, { color: colors.background }]}
-                >
-                  Logout
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+    {/* 🔥 Logout Confirmation Modal - Old UI Restored */}
+<Modal visible={showLogoutModal} transparent animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalBox, { backgroundColor: colors.surface }]}>
+      <View style={styles.modalHeader}>
+        <Text style={[styles.modalTitle, { color: colors.text }]}>
+          Confirm Logout
+        </Text>
+        <TouchableOpacity onPress={() => setShowLogoutModal(false)}>
+          <X size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+        Are you sure you want to log out of your account?
+      </Text>
+
+      <View style={styles.modalActions}>
+        <TouchableOpacity
+          style={[styles.cancelButton, { backgroundColor: colors.border }]}
+          onPress={() => setShowLogoutModal(false)}
+        >
+          <Text style={[styles.modalButtonText, { color: colors.text }]}>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.logoutButton, { backgroundColor: colors.primary }]}
+          onPress={handleLogoutConfirm}
+        >
+          <Text
+            style={[styles.modalButtonText, { color: colors.background }]}
+          >
+            Logout
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
     </SafeAreaView>
   );
 }
@@ -350,45 +351,49 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#00000088',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
   modalBox: {
-    marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 20,
     width: '100%',
+    borderRadius: 16,
+    padding: 20,
     maxWidth: 400,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   modalText: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
     marginBottom: 20,
   },
-  modalButtons: {
+  modalActions: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 12,
   },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
+  cancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
+  },
+  logoutButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
   },
   modalButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
+  
 });
