@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getProfile, updateProfile, getUsers } = require('../controllers/userController');
+const { getProfile, updateProfile, getUsers, changePassword } = require('../controllers/userController');
 const authenticateUser = require('../middleware/firebaseAuth');
 const User = require('../models/User');
 
@@ -53,6 +53,36 @@ router.get('/me', authenticateUser, getProfile);
  *         description: Profile updated successfully
  */
 router.put('/me', authenticateUser, updateProfile);
+
+/**
+ * @swagger
+ * /users/me/change-password:
+ *   post:
+ *     summary: Change your password
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Server error
+ */
+router.post('/me/change-password', authenticateUser, changePassword);
 
 /**
  * @swagger

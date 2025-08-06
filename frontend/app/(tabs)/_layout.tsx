@@ -43,6 +43,12 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="change-password"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
     </Tabs>
   );
 }

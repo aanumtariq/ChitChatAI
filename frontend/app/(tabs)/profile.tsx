@@ -20,6 +20,7 @@ import {
   Sun,
   Share,
   X,
+  Lock,
 } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -111,24 +112,6 @@ export default function ProfileScreen() {
       onSwitchChange: (value) =>
         saveNotificationSettings({ ...notifications, push: value }),
     },
-    {
-      icon: Bell,
-      title: 'Mention Notifications',
-      subtitle: 'Get notified when mentioned',
-      showSwitch: true,
-      switchValue: notifications.mentions,
-      onSwitchChange: (value) =>
-        saveNotificationSettings({ ...notifications, mentions: value }),
-    },
-    {
-      icon: Bell,
-      title: 'Message Previews',
-      subtitle: 'Show message content in notifications',
-      showSwitch: true,
-      switchValue: notifications.previews,
-      onSwitchChange: (value) =>
-        saveNotificationSettings({ ...notifications, previews: value }),
-    },
   ];
 
   const appearanceSettings: SettingItem[] = [
@@ -143,6 +126,12 @@ export default function ProfileScreen() {
   ];
 
   const otherSettings: SettingItem[] = [
+    {
+      icon: Lock,
+      title: 'Change Password',
+      subtitle: 'Update your account password',
+      onPress: () => router.push('/(tabs)/change-password' as any)
+    },
     {
       icon: Share,
       title: 'Invite Friends',
