@@ -79,35 +79,40 @@ Built with <strong>React Native + Expo</strong> for cross-platform mobile develo
 
 <hr>
 
-
-<h2  id="installation" >📦 Installation</h2>
-<ol>
-    <li>Clone the repository:
-<pre><code>git clone https://github.com/aanumtariq/ChitChatAI.git
+<h2 id="installation">📦 Installation</h2>
+<pre>
+# Clone the repository
+git clone https://github.com/aanumtariq/ChitChatAI.git
 cd ChitChatAI
-</code></pre>
-    </li>
-    <li>Install dependencies:
-<pre><code>npm install</code></pre>
-    </li>
-    <li>Install Expo CLI (if not already installed):
-<pre><code>npm install -g expo-cli</code></pre>
-    </li>
-</ol>
+</pre>
 
-<hr>
+<h3>1️⃣ Install Frontend Dependencies</h3>
+<pre>
+cd frontend
+npm install
+</pre>
 
-<h2 id="usage">▶️ Usage Examples</h2>
-<p>Start the development server:</p>
-<pre><code>npx expo start</code></pre>
-<p>Scan the QR code in the terminal with the Expo Go app.</p>
+<h3>2️⃣ Install Backend Dependencies</h3>
+<pre>
+cd backend
+npm install
+</pre>
 
-<p><strong>Run on iOS Simulator:</strong></p>
-<pre><code>npx expo start --ios</code></pre>
+<h2 id="usage">▶️ Usage</h2>
 
-<p><strong>Run on Android Emulator:</strong></p>
-<pre><code>npx expo start --android</code></pre>
+<h3>Start Backend</h3>
+<pre>
+cd backend
+npm run dev
+</pre>
 
+<h3>Start Frontend</h3>
+<pre>
+cd frontend
+npx expo start
+</pre>
+<p>Before startig backend server make sure to change IP address according to you local server.</p>
+<p>📱 Scan the QR code from the terminal with the <strong>Expo Go</strong> app to preview the mobile app on your device.</p>
 
 <hr>
 
