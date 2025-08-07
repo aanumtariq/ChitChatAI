@@ -279,10 +279,8 @@ export default function GroupChatScreen() {
         // Check for summary command first
         const isSummary = await handleSummaryGeneration(text);
 
-        // If not a summary command, proceed with regular AI response
-        if (!isSummary) {
-          setTimeout(() => handleAIResponse(text), 1000);
-        }
+        // Always trigger AI response for @AI mentions (including summaries)
+        setTimeout(() => handleAIResponse(text), 1000);
       }
     } catch (error) {
       console.log('❌ Error sending message:', error);
@@ -319,14 +317,10 @@ export default function GroupChatScreen() {
 
       const aiResponse = await sendAIMessage(id!, formattedMessages);
 
-      // AI response is saved to database, reload messages to show it
+      // AI response is saved to database and emitted via socket
       if (aiResponse && aiResponse !== '*no response*') {
         console.log('🤖 AI Response received:', aiResponse);
-
-        // Reload messages from database to show AI response
-        setTimeout(() => {
-          loadMessagesFromStorage();
-        }, 1000); // Give database time to save
+        // No need to reload - socket will handle the real-time update
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
@@ -336,40 +330,13 @@ export default function GroupChatScreen() {
   };
 
   const handleSummaryGeneration = async (text: string) => {
-    try {
-      // Extract days from text like "@AI summary 3" or "@AI summary 7 days"
-      const summaryMatch = text.match(/@ai\s+summary\s+(\d+)/i);
-      if (summaryMatch) {
-        const days = parseInt(summaryMatch[1]);
-        console.log('📊 Generating summary for last', days, 'days');
-
-        const summaryData = await generateSummary(id!, days);
-
-        // Create AI message with summary
-        const summaryMessage: Message = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          text: `📊 **Chat Summary (Last ${days} days)**\n\n${summaryData.summary}\n\n*Based on ${summaryData.messageCount} messages*`,
-          senderId: 'ai-assistant',
-          senderName: 'AI Assistant',
-          timestamp: new Date().toISOString(),
-          isAI: true,
-        };
-
-        setMessages((prev) => [...prev, summaryMessage]);
-
-        // Update last message
-        await AsyncStorage.setItem(
-          `@lastMessage_${id}`,
-          JSON.stringify({ lastMessage: summaryMessage })
-        );
-
-        return true; // Summary was generated
-      }
-      return false; // No summary command
-    } catch (error) {
-      console.error('Failed to generate summary:', error);
-      return false;
+    // Check if it's a summary command - if so, let handleAIResponse handle it
+    const summaryMatch = text.match(/@ai\s+summary\s*(\d+)?/i);
+    if (summaryMatch) {
+      console.log('📊 Summary command detected, letting AI handler process it');
+      return true; // Summary command detected, will be handled by AI response
     }
+    return false; // No summary command
   };
 
   const scrollToBottom = () =>
