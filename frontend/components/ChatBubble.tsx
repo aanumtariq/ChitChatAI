@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ interface ChatBubbleProps {
 
 }
 
-export default function ChatBubble({
+const ChatBubble = memo(function ChatBubble({
   message,
   isCurrentUser,
   onReply,
@@ -221,7 +221,7 @@ export default function ChatBubble({
 
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { marginVertical: 4 },
@@ -290,3 +290,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 });
+
+export default ChatBubble;

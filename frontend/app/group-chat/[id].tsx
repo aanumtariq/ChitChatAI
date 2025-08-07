@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -107,6 +107,13 @@ export default function GroupChatScreen() {
         // Don't add if it's from the current user (already added)
         if (message.senderId !== user.id) {
           setMessages((prev) => {
+            // Check if message already exists to prevent duplicates
+            const messageExists = prev.some(msg => msg.id === message.id);
+            if (messageExists) {
+              console.log('Message already exists, skipping:', message.id);
+              return prev;
+            }
+            
             const updatedMessages = [...prev, message];
             // Save the last message when receiving new messages
             const lastMessage = updatedMessages[updatedMessages.length - 1];
@@ -173,7 +180,11 @@ export default function GroupChatScreen() {
 
   const loadMessagesFromStorage = async () => {
     try {
-      setLoading(true);
+      // Only show loading on initial load, not on subsequent calls
+      if (messages.length === 0) {
+        setLoading(true);
+      }
+      
       // const stored = await AsyncStorage.getItem(storageKey);
       let loadedFromStorage = false;
       // if (stored) {
@@ -207,9 +218,12 @@ export default function GroupChatScreen() {
           );
         }
 
-        setMessages(mapped);
-        setPinnedMessage(null);
-        setReplyTo(null);
+        // Only replace messages if this is the initial load or if there are no messages
+        if (messages.length === 0) {
+          setMessages(mapped);
+          setPinnedMessage(null);
+          setReplyTo(null);
+        }
       }
     } catch (err: any) {
       setConfirmationModal({
@@ -221,7 +235,10 @@ export default function GroupChatScreen() {
       });
       console.log('Error loading messages:', err);
     } finally {
-      setLoading(false);
+      // Only set loading to false if we set it to true
+      if (messages.length === 0) {
+        setLoading(false);
+      }
     }
   };
 
@@ -372,7 +389,7 @@ export default function GroupChatScreen() {
   const scrollToBottom = () =>
     flatListRef.current?.scrollToEnd({ animated: true });
 
-  const handleDeleteMessage = (msgId: string) => {
+  const handleDeleteMessage = useCallback((msgId: string) => {
     setConfirmationModal({
       visible: true,
       title: 'Delete Message',
@@ -388,7 +405,7 @@ export default function GroupChatScreen() {
         }
       },
     });
-  };
+  }, [confirmationModal]);
 
   const handleClearChat = () => {
     setConfirmationModal({
@@ -413,19 +430,19 @@ export default function GroupChatScreen() {
     });
   };
 
-  const handlePinMessage = (msg: Message) => {
+  const handlePinMessage = useCallback((msg: Message) => {
     const updated = pinnedMessage?.id === msg.id ? null : msg;
     setPinnedMessage(updated);
     AsyncStorage.setItem(
       storageKey,
       JSON.stringify({ messages, pinnedMessage: updated })
     ).catch(() => console.warn('Failed to save pinned message'));
-  };
+  }, [pinnedMessage, messages, storageKey]);
 
-  const handleForwardMessage = (msg: Message) => {
+  const handleForwardMessage = useCallback((msg: Message) => {
     setSelectedForwardMessage(msg);
     setForwardModalVisible(true);
-  };
+  }, []);
 
   const toggleGroupSelection = (groupId: string) => {
     setSelectedGroups((prev) =>
@@ -601,6 +618,11 @@ export default function GroupChatScreen() {
             onContentSizeChange={scrollToBottom}
             onLayout={scrollToBottom}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={false}
+            initialNumToRender={50}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            getItemLayout={undefined}
           />
         )}
 
