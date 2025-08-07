@@ -319,14 +319,11 @@ export default function GroupChatScreen() {
 
       const aiResponse = await sendAIMessage(id!, formattedMessages);
 
-      // AI response is saved to database, reload messages to show it
+      // AI response will be received via Socket.IO, no need to reload
       if (aiResponse && aiResponse !== '*no response*') {
-        console.log('🤖 AI Response received:', aiResponse);
-
-        // Reload messages from database to show AI response
-        setTimeout(() => {
-          loadMessagesFromStorage();
-        }, 1000); // Give database time to save
+        console.log('🤖 AI Response received via API:', aiResponse);
+        console.log('✅ AI message will be delivered via Socket.IO');
+        // No manual reload needed - Socket.IO will handle it automatically
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
