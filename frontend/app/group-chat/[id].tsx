@@ -224,6 +224,10 @@ export default function GroupChatScreen() {
           setMessages(mapped);
           setPinnedMessage(null);
           setReplyTo(null);
+          // Scroll to bottom after loading initial messages
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }, 300);
         }
       }
     } catch (err: any) {
@@ -388,8 +392,8 @@ export default function GroupChatScreen() {
   };
 
   const scrollToBottom = useCallback(() => {
-    // With inverted FlatList, scrollToOffset(0) goes to the latest message
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    // Scroll to the end of the list (latest messages)
+    flatListRef.current?.scrollToEnd({ animated: true });
   }, []);
 
   const handleDeleteMessage = useCallback((msgId: string) => {
@@ -623,13 +627,14 @@ export default function GroupChatScreen() {
             initialNumToRender={20}
             maxToRenderPerBatch={10}
             windowSize={5}
-            inverted={true}
-            maintainVisibleContentPosition={{
-              minIndexForVisible: 0,
-              autoscrollToTopThreshold: 10
-            }}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            onContentSizeChange={() => {
+              // Scroll to bottom when new messages are added
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }, 100);
+            }}
           />
         )}
 
