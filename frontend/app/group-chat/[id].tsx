@@ -36,7 +36,7 @@ import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://192.168.0.103:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://192.168.0.102:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,
@@ -321,12 +321,15 @@ export default function GroupChatScreen() {
 
       // AI response is saved to database, reload messages to show it
       if (aiResponse && aiResponse !== '*no response*') {
-        console.log('🤖 AI Response received:', aiResponse);
-
-        // Reload messages from database to show AI response
-        setTimeout(() => {
-          loadMessagesFromStorage();
-        }, 1000); // Give database time to save
+        console.log('🤖 AI Response received via API:', aiResponse);
+        console.log('💡 AI message will be delivered via socket connection');
+        // The socket listener will automatically add the AI message to the chat
+         
+        // console.log('🤖 AI Response received:', aiResponse);
+        // // Reload messages from database to show AI response
+        // setTimeout(() => {
+        //   loadMessagesFromStorage();
+        // }, 1000); // Give database time to save
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);

@@ -72,7 +72,21 @@ export default function ChatListScreen() {
       if (isRefresh) setRefreshing(true);
       const data = await getGroups();
       const updatedGroups = await updateGroupLastMessages(data);
-      setGroups(updatedGroups);
+      // setGroups(updatedGroups);
+      const sortedGroups = updatedGroups
+        .filter(Boolean)
+        .sort((a, b) => {
+          const aTime = new Date(a.lastMessage?.timestamp || a.createdAt).getTime();
+          const bTime = new Date(b.lastMessage?.timestamp || b.createdAt).getTime();
+          return bTime - aTime;
+        });
+
+      // Pinned groups first, but maintain sorting within
+      const pinned = sortedGroups.filter((g) => g.pinned);
+      const unpinned = sortedGroups.filter((g) => !g.pinned);
+
+      setGroups([...pinned, ...unpinned]);
+
     } catch {
       alert('Failed to load chats');
     } finally {
