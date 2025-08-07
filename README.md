@@ -113,7 +113,12 @@ npx expo start
 </pre>
 <p>Before startig backend server make sure to change IP address according to you local server.</p>
 <p>📱 Scan the QR code from the terminal with the <strong>Expo Go</strong> app to preview the mobile app on your device.</p>
-
+<h5>If youre running locally make sure to install following dependencies:</h5>
+<p>
+- Npm install express
+- Npm install mongoose
+- Node latest version
+</p>
 <hr>
 
 <h2 id="technologies">🔧 Technologies Used</h2>
