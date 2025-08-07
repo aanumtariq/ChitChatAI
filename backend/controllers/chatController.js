@@ -523,7 +523,7 @@ exports.sendAIMessage = async (req, res) => {
     const aiResponse = await chatWithGroq(formattedMessages);
     // console.log("✅ AI Response:", aiResponse);
 
-    // Save AI response to database for persistence
+    // Save AI response to database for persistence and emit via socket
     if (aiResponse && aiResponse !== "*no response*") {
       try {
         const aiMessage = new ChatMessage({
@@ -536,9 +536,9 @@ exports.sendAIMessage = async (req, res) => {
 
         await aiMessage.save();
 
-        // Emit to group
+        // Emit to group via socket for real-time delivery
         const io = getIO();
-        io.to(groupId).emit('newMessage', {
+        const messageData = {
           id: aiMessage._id,
           text: aiMessage.content,
           senderId: 'ai-assistant',
@@ -546,12 +546,54 @@ exports.sendAIMessage = async (req, res) => {
           timestamp: aiMessage.createdAt,
           isAI: true,
           groupId,
-        });
+        };
+        
+        console.log("📡 Emitting AI message via socket to group:", groupId);
+        console.log("📡 AI message data:", messageData);
+        io.to(groupId).emit('newMessage', messageData);
 
-        console.log("💾 AI response saved to database");
+        console.log("💾 AI response saved to database and emitted via socket");
       } catch (dbError) {
         console.error("❌ Failed to save AI response to database:", dbError);
-        // Continue without saving - frontend will handle it locally
+        
+        // Even if database save fails, still emit via socket for real-time experience
+        try {
+          const io = getIO();
+          const fallbackMessageData = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            text: aiResponse,
+            senderId: 'ai-assistant',
+            senderName: 'AI Assistant',
+            timestamp: new Date(),
+            isAI: true,
+            groupId,
+          };
+          
+          console.log("📡 Database save failed, emitting AI message via socket only");
+          io.to(groupId).emit('newMessage', fallbackMessageData);
+        } catch (socketError) {
+          console.error("❌ Failed to emit AI message via socket:", socketError);
+        }
+      }
+    } else {
+      // Handle case where AI response is empty or invalid
+      console.log("⚠️ AI response was empty or invalid:", aiResponse);
+      try {
+        const io = getIO();
+        const errorMessageData = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          text: "Sorry, I couldn't generate a response. Please try again.",
+          senderId: 'ai-assistant',
+          senderName: 'AI Assistant',
+          timestamp: new Date(),
+          isAI: true,
+          groupId,
+        };
+        
+        console.log("📡 Emitting AI error message via socket");
+        io.to(groupId).emit('newMessage', errorMessageData);
+      } catch (socketError) {
+        console.error("❌ Failed to emit AI error message via socket:", socketError);
       }
     }
 

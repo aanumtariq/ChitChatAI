@@ -103,10 +103,23 @@ export default function GroupChatScreen() {
 
       // Listen for new messages
       socket.on('newMessage', (message: Message) => {
-        console.log('📨 Received new message:', message);
-        // Don't add if it's from the current user (already added)
-        if (message.senderId !== user.id) {
+        console.log('📨 Received new message via socket:', message);
+        
+        // Add message if it's from AI or another user (not current user)
+        const isFromCurrentUser = message.senderId === user.id;
+        const isFromAI = message.senderId === 'ai-assistant' || message.isAI;
+        
+        if (!isFromCurrentUser || isFromAI) {
+          console.log(`✅ Adding message to chat - From AI: ${isFromAI}, From other user: ${!isFromCurrentUser && !isFromAI}`);
+          
           setMessages((prev) => {
+            // Check if message already exists to prevent duplicates
+            const messageExists = prev.some(existingMsg => existingMsg.id === message.id);
+            if (messageExists) {
+              console.log('⚠️ Message already exists, skipping duplicate');
+              return prev;
+            }
+            
             const updatedMessages = [...prev, message];
             // Save the last message when receiving new messages
             const lastMessage = updatedMessages[updatedMessages.length - 1];
@@ -116,6 +129,8 @@ export default function GroupChatScreen() {
             ).catch(() => console.warn('Failed to save last message'));
             return updatedMessages;
           });
+        } else {
+          console.log('⏭️ Skipping message from current user (already added locally)');
         }
       });
 
@@ -319,17 +334,25 @@ export default function GroupChatScreen() {
 
       const aiResponse = await sendAIMessage(id!, formattedMessages);
 
-      // AI response is saved to database, reload messages to show it
+      // AI response will be received via socket - no need to reload messages
       if (aiResponse && aiResponse !== '*no response*') {
-        console.log('🤖 AI Response received:', aiResponse);
-
-        // Reload messages from database to show AI response
-        setTimeout(() => {
-          loadMessagesFromStorage();
-        }, 1000); // Give database time to save
+        console.log('🤖 AI Response received via API:', aiResponse);
+        console.log('💡 AI message will be delivered via socket connection');
+        // The socket listener will automatically add the AI message to the chat
+        // No manual message reloading needed - socket handles real-time delivery
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
+      // On error, show a fallback message to user
+      const errorMessage: Message = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        text: '❌ Failed to get AI response. Please try again.',
+        senderId: 'ai-assistant',
+        senderName: 'AI Assistant',
+        timestamp: new Date().toISOString(),
+        isAI: true,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setAiTyping(false);
     }
