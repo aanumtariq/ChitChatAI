@@ -601,7 +601,7 @@ export default function GroupChatScreen() {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={messages.slice().reverse()}
+            data={messages}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <ChatBubble
