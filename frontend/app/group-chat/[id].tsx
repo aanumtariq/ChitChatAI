@@ -114,9 +114,10 @@ export default function GroupChatScreen() {
               return prev;
             }
             
+            // Add new message to the end (latest messages are at the end of array)
             const updatedMessages = [...prev, message];
             // Save the last message when receiving new messages
-            const lastMessage = updatedMessages[updatedMessages.length - 1];
+            const lastMessage = message;
             AsyncStorage.setItem(
               `@lastMessage_${id}`,
               JSON.stringify({ lastMessage })
@@ -386,8 +387,10 @@ export default function GroupChatScreen() {
     }
   };
 
-  const scrollToBottom = () =>
-    flatListRef.current?.scrollToEnd({ animated: true });
+  const scrollToBottom = useCallback(() => {
+    // With inverted FlatList, scrollToOffset(0) goes to the latest message
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
 
   const handleDeleteMessage = useCallback((msgId: string) => {
     setConfirmationModal({
@@ -598,7 +601,7 @@ export default function GroupChatScreen() {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={messages.slice().reverse()}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <ChatBubble
@@ -615,14 +618,18 @@ export default function GroupChatScreen() {
               />
             )}
             contentContainerStyle={styles.messagesContainer}
-            onContentSizeChange={scrollToBottom}
-            onLayout={scrollToBottom}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
-            initialNumToRender={50}
+            initialNumToRender={20}
             maxToRenderPerBatch={10}
-            windowSize={10}
-            getItemLayout={undefined}
+            windowSize={5}
+            inverted={true}
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+              autoscrollToTopThreshold: 10
+            }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           />
         )}
 
@@ -837,7 +844,10 @@ const styles = StyleSheet.create({
   replyBannerTextContainer: { flex: 1 },
   replyBannerText: { fontSize: 12, fontWeight: '600' },
   replyBannerSubtext: { fontSize: 12 },
-  messagesContainer: { padding: 16, flexGrow: 1 },
+  messagesContainer: { 
+    padding: 16, 
+    flexGrow: 1,
+  },
   typingContainer: { paddingHorizontal: 16, paddingBottom: 8 },
   typingBubble: {
     alignSelf: 'flex-start',
