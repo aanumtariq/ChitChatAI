@@ -36,7 +36,7 @@ import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://192.168.0.102:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://172.16.81.117:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,
@@ -324,7 +324,7 @@ export default function GroupChatScreen() {
         console.log('🤖 AI Response received via API:', aiResponse);
         console.log('💡 AI message will be delivered via socket connection');
         // The socket listener will automatically add the AI message to the chat
-         
+
         // console.log('🤖 AI Response received:', aiResponse);
         // // Reload messages from database to show AI response
         // setTimeout(() => {
@@ -450,20 +450,33 @@ export default function GroupChatScreen() {
     try {
       // Show loading state
       setForwardModalVisible(false);
-      
+
       // Forward to each selected group
       for (const groupId of selectedGroups) {
         try {
           await forwardMessageAPI(selectedForwardMessage.id, groupId);
         } catch (error) {
-          console.error('❌ Error forwarding message to group:', groupId, error);
-          Alert.alert('Error', `Failed to forward message to ${allGroups.find(g => (g._id || g.id) === groupId)?.name || 'group'}`);
+          console.error(
+            '❌ Error forwarding message to group:',
+            groupId,
+            error
+          );
+          Alert.alert(
+            'Error',
+            `Failed to forward message to ${
+              allGroups.find((g) => (g._id || g.id) === groupId)?.name ||
+              'group'
+            }`
+          );
         }
       }
 
       // Show success message
-      Alert.alert('Success', `Message forwarded to ${selectedGroups.length} group(s)`);
-      
+      Alert.alert(
+        'Success',
+        `Message forwarded to ${selectedGroups.length} group(s)`
+      );
+
       // Reset state
       setSelectedGroups([]);
       setSelectedForwardMessage(null);
@@ -691,55 +704,87 @@ export default function GroupChatScreen() {
 
         {/* Forward Modal */}
         <Modal visible={forwardModalVisible} transparent animationType="slide">
-          <TouchableWithoutFeedback onPress={() => setForwardModalVisible(false)}>
+          <TouchableWithoutFeedback
+            onPress={() => setForwardModalVisible(false)}
+          >
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
                 <View
-                  style={[styles.modalContent, { backgroundColor: colors.surface }]}
+                  style={[
+                    styles.modalContent,
+                    { backgroundColor: colors.surface },
+                  ]}
                 >
                   <Text style={[styles.modalTitle, { color: colors.text }]}>
                     Forward Message
                   </Text>
-                  
+
                   {selectedForwardMessage && (
-                    <View style={[styles.forwardPreview, { backgroundColor: colors.inputBackground }]}>
-                      <Text style={[styles.forwardPreviewText, { color: colors.textSecondary }]}>
-                        Forwarding: "{selectedForwardMessage.text.substring(0, 50)}..."
+                    <View
+                      style={[
+                        styles.forwardPreview,
+                        { backgroundColor: colors.inputBackground },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.forwardPreviewText,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Forwarding: "
+                        {selectedForwardMessage.text.substring(0, 50)}..."
                       </Text>
                     </View>
                   )}
-                  
-                  <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+
+                  <Text
+                    style={[
+                      styles.modalSubtitle,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     Select groups to forward to:
                   </Text>
-                  
-                  <ScrollView style={styles.groupsList} showsVerticalScrollIndicator={false}>
+
+                  <ScrollView
+                    style={styles.groupsList}
+                    showsVerticalScrollIndicator={false}
+                  >
                     {allGroups
-                      .filter(grp => (grp._id || grp.id) !== id) // Exclude current group
+                      .filter((grp) => (grp._id || grp.id) !== id) // Exclude current group
                       .map((grp) => (
                         <TouchableOpacity
                           key={grp._id || grp.id}
-                          onPress={() => toggleGroupSelection(grp._id || grp.id)}
+                          onPress={() =>
+                            toggleGroupSelection(grp._id || grp.id)
+                          }
                           style={[
                             styles.groupItem,
                             {
-                              backgroundColor: selectedGroups.includes(grp._id || grp.id)
+                              backgroundColor: selectedGroups.includes(
+                                grp._id || grp.id
+                              )
                                 ? colors.primary + '20'
                                 : 'transparent',
-                              borderColor: selectedGroups.includes(grp._id || grp.id)
+                              borderColor: selectedGroups.includes(
+                                grp._id || grp.id
+                              )
                                 ? colors.primary
                                 : colors.border,
-                            }
+                            },
                           ]}
                         >
                           <Text
                             style={[
                               styles.groupItemText,
                               {
-                                color: selectedGroups.includes(grp._id || grp.id)
+                                color: selectedGroups.includes(
+                                  grp._id || grp.id
+                                )
                                   ? colors.primary
                                   : colors.text,
-                              }
+                              },
                             ]}
                           >
                             {grp.name}
@@ -750,28 +795,46 @@ export default function GroupChatScreen() {
                         </TouchableOpacity>
                       ))}
                   </ScrollView>
-                  
+
                   <View style={styles.modalActions}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={() => setForwardModalVisible(false)}
-                      style={[styles.modalButton, { backgroundColor: colors.border }]}
+                      style={[
+                        styles.modalButton,
+                        { backgroundColor: colors.border },
+                      ]}
                     >
-                      <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                      <Text
+                        style={[styles.modalButtonText, { color: colors.text }]}
+                      >
                         Cancel
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={confirmForwarding}
                       style={[
-                        styles.modalButton, 
-                        { 
-                          backgroundColor: selectedGroups.length > 0 ? colors.primary : colors.border,
-                          opacity: selectedGroups.length > 0 ? 1 : 0.5
-                        }
+                        styles.modalButton,
+                        {
+                          backgroundColor:
+                            selectedGroups.length > 0
+                              ? colors.primary
+                              : colors.border,
+                          opacity: selectedGroups.length > 0 ? 1 : 0.5,
+                        },
                       ]}
                       disabled={selectedGroups.length === 0}
                     >
-                      <Text style={[styles.modalButtonText, { color: selectedGroups.length > 0 ? '#fff' : colors.textSecondary }]}>
+                      <Text
+                        style={[
+                          styles.modalButtonText,
+                          {
+                            color:
+                              selectedGroups.length > 0
+                                ? '#fff'
+                                : colors.textSecondary,
+                          },
+                        ]}
+                      >
                         Forward ({selectedGroups.length})
                       </Text>
                     </TouchableOpacity>
@@ -904,14 +967,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
-  confirmBtn: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    marginTop: 16 
+  confirmBtn: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
   },
-  cancelBtn: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    marginTop: 8 
+  cancelBtn: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
   },
 });

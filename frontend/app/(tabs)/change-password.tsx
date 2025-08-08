@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Text } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import Input from '@/components/Input';
@@ -21,9 +27,12 @@ export default function ChangePasswordScreen() {
     const errs: { [key: string]: string } = {};
     if (!oldPassword) errs.oldPassword = 'Old password is required.';
     if (!newPassword) errs.newPassword = 'New password is required.';
-    if (newPassword && newPassword.length < 6) errs.newPassword = 'Password must be at least 6 characters.';
-    if (!confirmPassword) errs.confirmPassword = 'Please confirm your new password.';
-    if (newPassword && confirmPassword && newPassword !== confirmPassword) errs.confirmPassword = 'Passwords do not match.';
+    if (newPassword && newPassword.length < 6)
+      errs.newPassword = 'Password must be at least 6 characters.';
+    if (!confirmPassword)
+      errs.confirmPassword = 'Please confirm your new password.';
+    if (newPassword && confirmPassword && newPassword !== confirmPassword)
+      errs.confirmPassword = 'Passwords do not match.';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -33,19 +42,27 @@ export default function ChangePasswordScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync('userToken');
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.102:5000/api'}/users/me/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
-      });
+      const res = await fetch(
+        `${
+          process.env.EXPO_PUBLIC_API_URL || 'http://172.16.81.117:5000/api'
+        }/users/me/change-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         setErrors({ general: data.message || 'Failed to change password.' });
       } else {
-        Toast.show({ type: 'success', text1: 'Password changed successfully!' });
+        Toast.show({
+          type: 'success',
+          text1: 'Password changed successfully!',
+        });
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -64,7 +81,9 @@ export default function ChangePasswordScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.text }]}>Change Password</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Change Password
+        </Text>
         <Input
           label="Old Password"
           value={oldPassword}
@@ -89,7 +108,11 @@ export default function ChangePasswordScreen() {
           error={errors.confirmPassword}
           autoCapitalize="none"
         />
-        {errors.general && <Text style={[styles.error, { color: colors.error }]}>{errors.general}</Text>}
+        {errors.general && (
+          <Text style={[styles.error, { color: colors.error }]}>
+            {errors.general}
+          </Text>
+        )}
         <Button
           title={loading ? 'Changing...' : 'Done'}
           onPress={handleChangePassword}

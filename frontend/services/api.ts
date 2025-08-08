@@ -2,7 +2,7 @@ import { Group, Message, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://192.168.0.102:5000/api'; // replace with your backend IP
+const API_BASE_URL = 'http://172.16.81.117:5000/api'; // replace with your backend IP
 
 // Helper to get stored Firebase token
 async function getAuthToken(): Promise<string | null> {
