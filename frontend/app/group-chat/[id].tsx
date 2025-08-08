@@ -36,7 +36,7 @@ import { Message, Group } from '@/types';
 import io from 'socket.io-client';
 
 // Socket connection
-const SOCKET_URL = 'http://172.16.81.117:5000'; // Change to your backend URL
+const SOCKET_URL = 'http://10.210.11.117:5000'; // Change to your backend URL
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   timeout: 10000,

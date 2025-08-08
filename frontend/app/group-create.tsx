@@ -154,25 +154,29 @@ export default function GroupCreateScreen() {
                 automatically)
               </Text>
 
-              <View style={styles.emailInputContainer}>
-                <Input
-                  label="Email Address"
-                  value={currentEmail}
-                  onChangeText={setCurrentEmail}
-                  error={emailError}
-                  placeholder="user@example.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onSubmitEditing={addEmail}
-                  returnKeyType="done"
-                />
-                <Button
-                  title="Add"
-                  onPress={addEmail}
-                  disabled={!currentEmail.trim()}
-                  style={styles.addButton}
-                />
-              </View>
+             <View style={styles.emailInputContainer}>
+  <View style={{ flex: 1 }}>
+    <Input
+      label="Email Address"
+      value={currentEmail}
+      onChangeText={setCurrentEmail}
+      error={emailError}
+      placeholder="user@example.com"
+      keyboardType="email-address"
+      autoCapitalize="none"
+      onSubmitEditing={addEmail}
+      returnKeyType="done"
+    />
+  </View>
+
+  <Button
+    title="Add"
+    onPress={addEmail}
+    disabled={!currentEmail.trim()}
+    style={styles.addButton}
+  />
+</View>
+
 
               {emails.length > 0 && (
                 <EmailTagList emails={emails} onRemove={removeEmail} />
@@ -259,12 +263,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  emailInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+ emailInputContainer: {
+  flexDirection: 'row',
+  alignItems: 'flex-end',
+  gap: 12,
+  flexWrap: 'wrap',
+},
 
-    gap: 12,
-  },
   addButton: {
     minWidth: 80,
     // marginTop: 25,
