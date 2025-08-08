@@ -93,6 +93,11 @@ io.on('connection', (socket) => {
 // ====================
 // 🧪 Test Route
 // ====================
+app.get('/', (req, res) => {
+  res.send('Backend API is running 🚀');
+});
+
+
 app.get('/api/test', (req, res) => {
   res.json({ message: '✅ Backend is working!' });
 });
