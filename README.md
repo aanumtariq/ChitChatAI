@@ -184,5 +184,13 @@ Please follow the existing coding style and ensure documentation is updated.</p>
 <p><strong>Q:</strong> Chat summary not showing<br>
 <strong>A:</strong> Backend AI context service must be active for summaries to work.</p>
 
+
+<p><strong>Q:</strong>  Why isn't AI replying to my message?<br>
+<strong>A:</strong> Make sure you type @ai before your question. AI only responds when directly mentioned.
+</p>
+
+<p><strong>Q:</strong> Can I create a group without registering?<br>
+<strong>A:</strong>  No, only registered users can create or join groups.</p>
+
 </body>
 </html>
