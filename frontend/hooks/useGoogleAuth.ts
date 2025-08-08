@@ -33,7 +33,7 @@ export default function useGoogleAuth(onSuccess: () => void, onError: () => void
             const firebaseToken = await user.getIdToken();
 
             // Call your backend to create/sync user and get user info
-            const res = await axios.post('http://172.16.81.117:5000/api/auth/google-login', {}, {
+            const res = await axios.post('http://10.210.11.117:5000/api/auth/google-login', {}, {
               headers: { Authorization: `Bearer ${firebaseToken}` }
             });
             const userData = res.data;

@@ -44,7 +44,7 @@ export default function ChangePasswordScreen() {
       const token = await SecureStore.getItemAsync('userToken');
       const res = await fetch(
         `${
-          process.env.EXPO_PUBLIC_API_URL || 'http://172.16.81.117:5000/api'
+          process.env.EXPO_PUBLIC_API_URL || 'http://10.210.11.117:5000/api'
         }/users/me/change-password`,
         {
           method: 'POST',

@@ -27,6 +27,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { getProfile } from '@/services/api';
+import { Info, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { LayoutAnimation, Platform, UIManager } from 'react-native';
 
 interface SettingItem {
   icon: any;
@@ -36,6 +38,9 @@ interface SettingItem {
   showSwitch?: boolean;
   switchValue?: boolean;
   onSwitchChange?: (value: boolean) => void;
+}
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 export default function ProfileScreen() {
@@ -66,6 +71,13 @@ export default function ProfileScreen() {
       console.log('Failed to load settings');
     }
   };
+  const [showAbout, setShowAbout] = useState(false);
+
+const toggleAbout = () => {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  setShowAbout(!showAbout);
+};
+
 
   const fetchUserProfile = async () => {
     try {
@@ -225,6 +237,94 @@ export default function ProfileScreen() {
             {appearanceSettings.map(renderSettingItem)}
           </View>
         </View>
+{/* About Section */}
+<View style={styles.section}>
+  <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+
+  <View style={[styles.settingsGroup, { backgroundColor: colors.surface }]}>
+    <TouchableOpacity
+      style={[styles.settingItem, { borderBottomColor: colors.border }]}
+      onPress={toggleAbout}
+    >
+      <View style={styles.settingLeft}>
+        <Info size={24} color={colors.primary} strokeWidth={2} />
+        <View style={styles.settingText}>
+          <Text style={[styles.settingTitle, { color: colors.text }]}>About ChitChat AI</Text>
+          <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>App usage, features & team</Text>
+        </View>
+      </View>
+      <View style={styles.settingRight}>
+        {showAbout ? (
+          <ChevronUp size={20} color={colors.textSecondary} />
+        ) : (
+          <ChevronDown size={20} color={colors.textSecondary} />
+        )}
+      </View>
+    </TouchableOpacity>
+
+    {showAbout && (
+      <View style={{ padding: 16 }}>
+        <Text style={[styles.settingSubtitle, { color: colors.text, fontWeight: 'bold' }]}>
+          About ChitChat AI
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 6 }]}>
+          Welcome to <Text style={{ fontWeight: 'bold' }}>ChitChat AI</Text> — a multi-user mobile application powered by artificial intelligence.{"\n"}
+          It enhances your group conversations with smart AI interactions while keeping things simple for users.
+        </Text>
+
+        <Text style={[styles.settingSubtitle, { color: colors.text, fontWeight: 'bold', marginTop: 14 }]}>
+          🔸 How to Use the App
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 4 }]}>
+          <Text style={{ fontWeight: 'bold' }}>Talk to the AI:</Text> {"\n"}
+          Use <Text style={{ fontWeight: 'bold' }}>@ai</Text> to interact with the AI.{"\n"}
+          Example: <Text style={{ fontStyle: 'italic' }}>@ai What is machine learning?</Text>{"\n"}
+          Without <Text style={{ fontWeight: 'bold' }}>@ai</Text>, the AI won’t respond.
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 8 }]}>
+          <Text style={{ fontWeight: 'bold' }}>Request Summaries:</Text> {"\n"}
+          Want a summary of past chats? Just type:{"\n"}
+          <Text style={{ fontStyle: 'italic' }}>@ai summary 1</Text> — for 1-day summary{"\n"}
+          <Text style={{ fontStyle: 'italic' }}>@ai summary 2</Text> — for 2 days, and so on.
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 8 }]}>
+          <Text style={{ fontWeight: 'bold' }}>Simple Group Chat:</Text>{"\n"}
+          Chat freely without using AI by just messaging normally.
+        </Text>
+          <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 8 }]}>
+          <Text style={{ fontWeight: 'bold' }}>Create Groups & Add Members:</Text>{"\n"}
+          Only registered users can create groups.{"\n"}
+          Members can only be added using their registered email.{"\n"}
+          There should be a minimum of 2 users to create a group.
+        </Text>
+
+
+        <Text style={[styles.settingSubtitle, { color: colors.text, fontWeight: 'bold', marginTop: 14 }]}>
+          Context-Aware AI (What Makes It Different):
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 4 }]}>
+          Unlike most other apps like Meta, ChitChat AI <Text style={{ fontWeight: 'bold' }}>remembers the full conversation context</Text>.{"\n"}
+          This ensures responses are accurate, relevant, and feel like a real conversation.
+        </Text>
+
+        <Text style={[styles.settingSubtitle, { color: colors.text, fontWeight: 'bold', marginTop: 14 }]}>
+          🔸 Developed By
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 4 }]}>
+          ChitChat AI was developed by:{"\n"}
+          • Anum Tariq{"\n"}
+          • Sajjad Ali{"\n"}
+          • Taha Ali{"\n"}
+          • Yasir Ali
+        </Text>
+        <Text style={[styles.settingSubtitle, { color: colors.text, marginTop: 8 }]}>
+          This project was completed as part of the <Text style={{ fontWeight: 'bold' }}>Folio3 Summer Internship Program</Text>{"\n"}
+          under the mentorship of <Text style={{ fontWeight: 'bold' }}>Talha Tahir</Text>.
+        </Text>
+      </View>
+    )}
+  </View>
+</View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -395,5 +495,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  
+  aboutBox: {
+  marginHorizontal: 16,
+  marginTop: 8,
+  padding: 16,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#E0E0E0', // light border
+  elevation: 2, // Android shadow
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.1,
+  shadowRadius: 3, // iOS shadow
+},
+aboutText: {
+  fontSize: 14,
+  lineHeight: 22,
+  textAlign: 'left',
+},
+
 });
